@@ -1,0 +1,105 @@
+name: build
+
+on:
+  pull_request:
+    branches: [ master ]
+
+env:
+  RAILS_ENV: test
+  BUNDLE_WITHOUT: development
+  RAILS_MASTER_KEY: {{ your_test_master.key }}
+
+jobs:
+  bundle-cache:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - id: files
+        uses: jitterbit/get-changed-files@v1
+      - uses: ruby/setup-ruby@v1
+        if: ${{ contains(steps.files.outputs.modified, 'Gemfile.lock') }}
+        with:
+          bundler: 2.2.16
+          bundler-cache: true
+
+  specs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: bundle-cache
+
+    services:
+      postgres:
+        image: postgres:9.6
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler: 2.2.16
+          bundler-cache: true
+
+      - name: zeitwerk:check
+        run: bundle exec rails zeitwerk:check
+
+      - name: Setup DB
+        run: bundle exec rails db:test:prepare
+
+      - name: rspec
+        run: bundle exec rspec
+
+  lecturer-specs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: bundle-cache
+
+    services:
+      postgres:
+        image: postgres:9.6
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Checkout lecturer specs
+        uses: actions/checkout@v3
+        with:
+          repository: infinum-academy/rails-lecturer-specs
+          token: ${{ secrets.INFINUM_MACHINES_GH_PAT }}
+          path: rails-lecturer-specs
+
+      - name: Setup DB
+        run: bundle exec rails db:test:prepare
+
+      - name: Install frontend dependencies
+        run: yarn install
+
+      - name: Run lecturer specs
+        shell: bash
+        env:
+          BRANCH_NAME: ${{ github.head_ref }}
+        run: |
+          cp -R rails-lecturer-specs/behaviour .
+          rm -rf rails-lecturer-specs
+          source behaviour/profile
+          lecturer-specs run-all $BRANCH_NAME
