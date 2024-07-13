@@ -58,4 +58,41 @@ RSpec.describe OpenWeatherMap::City do
       expect(city < city_same_temp_second_name).to be true
     end
   end
+
+  describe '.parse' do
+    let(:response) do
+      {
+        'coord' => { 'lon' => 145.77, 'lat' => -16.92 },
+        'main' => { 'temp' => 300.15 },
+        'id' => 2172797,
+        'name' => 'Cairns'
+      }
+    end
+
+    subject { described_class.parse(response) }
+
+    it 'initializes the city with correct id' do
+      expect(subject.id).to eq(2172797)
+    end
+
+    it 'initializes the city with correct latitude' do
+      expect(subject.lat).to eq(-16.92)
+    end
+
+    it 'initializes the city with correct longitude' do
+      expect(subject.lon).to eq(145.77)
+    end
+
+    it 'initializes the city with correct name' do
+      expect(subject.name).to eq('Cairns')
+    end
+
+    it 'initializes the city with correct temperature in Kelvin' do
+      expect(subject.temp_k).to eq(300.15)
+    end
+
+    it 'initializes the city with correct temperature in Celsius' do
+      expect(subject.temp).to eq(27.0)
+    end
+  end
 end

@@ -25,5 +25,14 @@ module OpenWeatherMap
         end
       end
 
+      def self.parse(city_data)
+        id = city_data['id']
+        lat = city_data['coord']['lat']
+        lon = city_data['coord']['lon']
+        temp_k = city_data['main']['temp']
+        name = city_data['name']
+        new(id: id, lat: lat, lon: lon, temp_k: temp_k, name: name)
+      end
+
     end
   end
