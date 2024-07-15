@@ -1,5 +1,7 @@
 module OpenWeatherMap
   class City
+    API_KEY = Rails.application.credentials.open_weather_map_api_key
+    API_URL = 'https://api.openweathermap.org/data/2.5/find'.freeze
     include Comparable
     attr_reader :id, :lat, :lon, :temp_k, :name
 
@@ -32,6 +34,29 @@ module OpenWeatherMap
       temp_k = city_data['main']['temp']
       name = city_data['name']
       new(id: id, lat: lat, lon: lon, temp_k: temp_k, name: name)
+    end
+
+    def nearby(count = 5)
+      uri = build_uri(count)
+      response = Net::HTTP.get(uri)
+      result = JSON.parse(response)
+      result['list'].map { |city_data| self.class.parse(city_data) }
+    end
+
+    def build_uri(count)
+      uri = URI(API_URL)
+      params = {
+        lat: lat,
+        lon: lon,
+        cnt: count,
+        appid: OpenWeatherMap::API_KEY
+      }
+      uri.query = URI.encode_www_form(params)
+      uri
+    end
+
+    def coldest_nearby(*args)
+      nearby(*args).min_by(&:temp_k)
     end
   end
 end
