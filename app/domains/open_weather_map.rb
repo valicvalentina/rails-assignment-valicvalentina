@@ -22,6 +22,6 @@ module OpenWeatherMap
     uri = URI("#{API_URL}group?id=#{city_id}&appid=#{API_KEY}")
     response = Net::HTTP.get(uri)
     parsed_response = JSON.parse(response)
-    parsed_response['list'].each { |city| City.parse(city) }
+    parsed_response['list'].map { |city| City.parse(city) }
   end
 end
