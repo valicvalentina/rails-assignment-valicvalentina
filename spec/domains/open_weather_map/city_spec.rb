@@ -33,40 +33,48 @@ RSpec.describe OpenWeatherMap::City do
     end
   end
 
-  describe 'comparing objects' do
-    let(:cities) do
-      {
-        lower_temp: described_class.new(id: 524_901, lat: 55.75, lon: 37.62, temp_k: 295.0,
-                                        name: 'Moscow'),
-        same_temp_first_name: described_class.new(id: 524_902, lat: 55.75, lon: 37.62,
-                                                  temp_k: 300.15, name: 'Athens'),
-        same_temp_same_name: described_class.new(id: 2_172_797, lat: -16.92, lon: 145.77,
-                                                 temp_k: 300.15, name: 'Cairns'),
-        higher_temp: described_class.new(id: 2_172_798, lat: -16.92, lon: 145.77, temp_k: 305.0,
-                                         name: 'Brisbane'),
-        same_temp_second_name: described_class.new(id: 524_903, lat: 55.75, lon: 37.62,
-                                                   temp_k: 300.15, name: 'Zurich')
-      }
+  describe OpenWeatherMap::City do
+    let(:city) { described_class.new(id: 1, lat: 0.0, lon: 0.0, temp_k: 300.15, name: 'Cairns') }
+
+    describe 'temperature comparisons' do
+      it 'returns true when receiver has a lower temperature' do
+        moscow = described_class.new(id: 524_901, lat: 55.75, lon: 37.62, temp_k: 295.0,
+                                     name: 'Moscow')
+
+        expect(moscow < city).to be true
+      end
+
+      it 'returns true when receiver has a higher temperature' do
+        brisbane = described_class.new(id: 2_172_798, lat: -16.92, lon: 145.77, temp_k: 305.0,
+                                       name: 'Brisbane')
+
+        expect(brisbane > city).to be true
+      end
     end
 
-    it 'returns true when receiver has a lower temperature' do
-      expect(cities[:lower_temp] < city).to be true
-    end
+    describe 'name comparisons when temperatures are equal' do
+      it 'returns true when receiver has the same temperature ' \
+         'but name comes first alphabetically' do
+        athens = described_class.new(id: 524_902, lat: 55.75, lon: 37.62, temp_k: 300.15,
+                                     name: 'Athens')
 
-    it 'returns true when receiver has the same temperature but name comes first alphabetically' do
-      expect(cities[:same_temp_first_name] < city).to be true
-    end
+        expect(athens < city).to be true
+      end
 
-    it 'returns false when receiver has the same temperature and name' do
-      expect(cities[:same_temp_same_name] == city).to be true
-    end
+      it 'returns true when receiver has the same temperature and name' do
+        cairns = described_class.new(id: 2_172_797, lat: -16.92, lon: 145.77, temp_k: 300.15,
+                                     name: 'Cairns')
 
-    it 'returns true when receiver has a higher temperature' do
-      expect(cities[:higher_temp] > city).to be true
-    end
+        expect(cairns == city).to be true
+      end
 
-    it 'returns true when receiver has the same temperature but name comes second alphabetically' do
-      expect(city < cities[:same_temp_second_name]).to be true
+      it 'returns true when receiver has the same temperature ' \
+         'but name comes second alphabetically' do
+        zurich = described_class.new(id: 524_903, lat: 55.75, lon: 37.62, temp_k: 300.15,
+                                     name: 'Zurich')
+
+        expect(city < zurich).to be true
+      end
     end
   end
 

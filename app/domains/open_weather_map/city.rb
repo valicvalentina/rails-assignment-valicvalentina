@@ -1,8 +1,8 @@
 module OpenWeatherMap
   class City
+    include Comparable
     API_KEY = Rails.application.credentials.open_weather_map_api_key
     API_URL = 'https://api.openweathermap.org/data/2.5/find'.freeze
-    include Comparable
     attr_reader :id, :lat, :lon, :temp_k, :name
 
     def initialize(id:, lat:, lon:, temp_k:, name:)
