@@ -26,6 +26,7 @@ gem 'jbuilder', '~> 2.7'
 # gem 'image_processing', '~> 1.2'
 
 group :development, :test do
+  gem 'annotate'
   gem 'overcommit', require: false
   gem 'rspec-rails'
   gem 'rubocop', require: false
