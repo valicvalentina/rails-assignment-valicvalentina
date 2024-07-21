@@ -31,6 +31,7 @@ ActiveRecord::Schema.define(version: 2024_07_17_102812) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index "lower((name)::text)", name: "index_companies_on_LOWER_name", unique: true
+    t.index ["name"], name: "index_companies_on_name", unique: true
   end
 
   create_table "flights", force: :cascade do |t|

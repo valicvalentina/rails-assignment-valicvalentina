@@ -8,6 +8,8 @@ class Booking < ApplicationRecord
   private
 
   def flight_not_in_past
+    return if flight.nil?
+
     errors.add(:flight, "can't be in the past") if flight.departs_at < DateTime.current
   end
 end
