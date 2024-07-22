@@ -1,5 +1,5 @@
 RSpec.describe Flight, type: :model do
-  # koristim subject jer je to glavni objekt koji se testira
+  # using subject because that's the main object being tested
   subject(:flight) { build(:flight, company: company) }
 
   let(:company) { create(:company) }
@@ -17,7 +17,7 @@ RSpec.describe Flight, type: :model do
   it { is_expected.to validate_presence_of(:arrives_at) }
 
   it 'is invalid if departs_at is not before arrives_at' do
-    flight = build(:flight, departs_at: DateTime.now + 2.days, arrives_at: DateTime.now + 1.day,
+    flight = build(:flight, departs_at: 2.days.from_now, arrives_at: 1.day.from_now,
                             company: company)
     flight.valid?
     expect(flight.errors[:departs_at]).to include('must be before arrives_at')
