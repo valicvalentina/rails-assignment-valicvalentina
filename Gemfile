@@ -26,6 +26,7 @@ gem 'jbuilder', '~> 2.7'
 # gem 'image_processing', '~> 1.2'
 
 group :development, :test do
+  gem 'annotate'
   gem 'overcommit', require: false
   gem 'rspec-rails'
   gem 'rubocop', require: false
@@ -36,6 +37,10 @@ end
 gem 'pg'
 
 gem 'httparty'
+
+gem 'factory_bot_rails'
+
+gem 'shoulda-matchers'
 
 group :development do
   # Access an interactive console on exception pages or by calling 'console' anywhere in the code.
