@@ -1,6 +1,7 @@
 module Api
   class UsersController < ApplicationController
     before_action :set_user, only: [:show, :update, :destroy]
+
     def index
       users = User.all
       render json: { users: UserSerializer.render_as_json(users, view: :extended) }
@@ -8,14 +9,14 @@ module Api
 
     def show
       user = User.find(params[:id])
-      render json: UserSerializer.render(user, view: :extended)
+      render json: { user: UserSerializer.render_as_json(user, view: :extended) }
     end
 
     def create
       user = User.new(user_params)
-
       if user.save
-        render json: UserSerializer.render(user, view: :extended), status: :created
+        render json: { user: UserSerializer.render_as_json(user, view: :extended) },
+               status: :created
       else
         render json: { errors: user.errors }, status: :bad_request
       end
@@ -24,7 +25,7 @@ module Api
     def update
       user = User.find(params[:id])
       if user.update(user_params)
-        render json: UserSerializer.render(user, view: :extended), status: :ok
+        render json: { user: UserSerializer.render_as_json(user, view: :extended) }, status: :ok
       else
         render json: { errors: user.errors }, status: :bad_request
       end

@@ -1,6 +1,7 @@
 module Api
   class FlightsController < ApplicationController
     before_action :set_flight, only: [:show, :update, :destroy]
+
     def index
       flights = Flight.all
       render json: { flights: FlightSerializer.render_as_json(flights, view: :extended) }
@@ -8,14 +9,14 @@ module Api
 
     def show
       flight = Flight.find(params[:id])
-      render json: FlightSerializer.render(flight, view: :extended)
+      render json: { flight: FlightSerializer.render_as_json(flight, view: :extended) }
     end
 
     def create
       flight = Flight.new(flight_params)
-
       if flight.save
-        render json: FlightSerializer.render(flight, view: :extended), status: :created
+        render json: { flight: FlightSerializer.render_as_json(flight, view: :extended) },
+               status: :created
       else
         render json: { errors: flight.errors }, status: :bad_request
       end
@@ -24,7 +25,8 @@ module Api
     def update
       flight = Flight.find(params[:id])
       if flight.update(flight_params)
-        render json: FlightSerializer.render(flight, view: :extended), status: :ok
+        render json: { flight: FlightSerializer.render_as_json(flight, view: :extended) },
+               status: :ok
       else
         render json: { errors: flight.errors }, status: :bad_request
       end

@@ -20,7 +20,13 @@ RSpec.describe 'Flights API', type: :request do
 
       expect(response).to have_http_status(:ok)
       json_body = JSON.parse(response.body)
-      expect(json_body).to include('name', 'departs_at', 'arrives_at')
+      expect(json_body['flight']).to include(
+        'name',
+        'departs_at',
+        'arrives_at',
+        'base_price',
+        'no_of_seats'
+      )
     end
 
     it 'returns status 404 if the flight does not exist' do
@@ -46,7 +52,11 @@ RSpec.describe 'Flights API', type: :request do
 
         expect(response).to have_http_status(:created)
         json_body = JSON.parse(response.body)
-        expect(json_body).to include('name' => 'Zagreb-Bratislava')
+        expect(json_body['flight']).to include(
+          'name' => 'Zagreb-Bratislava',
+          'no_of_seats' => 330,
+          'base_price' => '200.0'
+        )
       end
     end
 
@@ -65,14 +75,14 @@ RSpec.describe 'Flights API', type: :request do
   end
 
   describe 'PUT /api/flights/:id' do
-    let(:valid_attributes) { { flight: { name: 'Zagreb-Bratislava' } } }
+    let(:valid_attributes) { { flight: { name: 'Updated Flight' } } }
 
     context 'when the record exists' do
       it 'updates the flight' do
         put "/api/flights/#{flights.first.id}", params: valid_attributes
         expect(response).to have_http_status(:ok)
         json_body = JSON.parse(response.body)
-        expect(json_body).to include('name' => 'Zagreb-Bratislava')
+        expect(json_body['flight']).to include('name' => 'Updated Flight')
       end
     end
 

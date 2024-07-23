@@ -19,7 +19,10 @@ RSpec.describe 'Users API', type: :request do
 
       expect(response).to have_http_status(:ok)
       json_body = JSON.parse(response.body)
-      expect(json_body).to include('first_name', 'email')
+      expect(json_body['user']).to include(
+        'first_name',
+        'email'
+      )
     end
 
     it 'returns status 404 if the user does not exist' do
@@ -44,7 +47,7 @@ RSpec.describe 'Users API', type: :request do
 
         expect(response).to have_http_status(:created)
         json_body = JSON.parse(response.body)
-        expect(json_body).to include(
+        expect(json_body['user']).to include(
           'first_name' => 'Valentina',
           'email' => 'valentina.valic@gmail.com'
         )
@@ -76,7 +79,7 @@ RSpec.describe 'Users API', type: :request do
         put "/api/users/#{users.first.id}", params: valid_attributes
         expect(response).to have_http_status(:ok)
         json_body = JSON.parse(response.body)
-        expect(json_body).to include('first_name' => 'Sven')
+        expect(json_body['user']).to include('first_name' => 'Sven')
       end
     end
 

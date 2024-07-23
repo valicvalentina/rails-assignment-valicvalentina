@@ -22,7 +22,7 @@ RSpec.describe 'Bookings API', type: :request do
 
       expect(response).to have_http_status(:ok)
       json_body = JSON.parse(response.body)
-      expect(json_body).to include('no_of_seats', 'seat_price')
+      expect(json_body['booking']).to include('no_of_seats', 'seat_price')
     end
 
     it 'returns status 404 if the booking does not exist' do
@@ -47,7 +47,7 @@ RSpec.describe 'Bookings API', type: :request do
 
         expect(response).to have_http_status(:created)
         json_body = JSON.parse(response.body)
-        expect(json_body).to include('no_of_seats' => 2, 'seat_price' => '150.0')
+        expect(json_body['booking']).to include('no_of_seats' => 2, 'seat_price' => '150.0')
       end
     end
 
@@ -73,7 +73,7 @@ RSpec.describe 'Bookings API', type: :request do
         put "/api/bookings/#{bookings.first.id}", params: valid_attributes
         expect(response).to have_http_status(:ok)
         json_body = JSON.parse(response.body)
-        expect(json_body).to include('no_of_seats' => 3)
+        expect(json_body['booking']).to include('no_of_seats' => 3)
       end
     end
 

@@ -9,14 +9,14 @@ module Api
 
     def show
       company = Company.find(params[:id])
-      render json: CompanySerializer.render(company, view: :extended)
+      render json: { company: CompanySerializer.render_as_json(company, view: :extended) }
     end
 
     def create
       company = Company.new(company_params)
-
       if company.save
-        render json: CompanySerializer.render(company, view: :extended), status: :created
+        render json: { company: CompanySerializer.render_as_json(company, view: :extended) },
+               status: :created
       else
         render json: { errors: company.errors }, status: :bad_request
       end
@@ -25,7 +25,8 @@ module Api
     def update
       company = Company.find(params[:id])
       if company.update(company_params)
-        render json: CompanySerializer.render(company, view: :extended), status: :ok
+        render json: { company: CompanySerializer.render_as_json(company, view: :extended) },
+               status: :ok
       else
         render json: { errors: company.errors }, status: :bad_request
       end

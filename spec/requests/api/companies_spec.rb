@@ -19,7 +19,7 @@ RSpec.describe 'Companies API', type: :request do
 
       expect(response).to have_http_status(:ok)
       json_body = JSON.parse(response.body)
-      expect(json_body).to include('name')
+      expect(json_body['company']).to include('name')
     end
 
     it 'returns status 404 if the company does not exist' do
@@ -42,7 +42,7 @@ RSpec.describe 'Companies API', type: :request do
 
         expect(response).to have_http_status(:created)
         json_body = JSON.parse(response.body)
-        expect(json_body).to include('name' => 'New Company')
+        expect(json_body['company']).to include('name' => 'New Company')
       end
     end
 
@@ -68,7 +68,7 @@ RSpec.describe 'Companies API', type: :request do
         put "/api/companies/#{companies.first.id}", params: valid_attributes
         expect(response).to have_http_status(:ok)
         json_body = JSON.parse(response.body)
-        expect(json_body).to include('name' => 'Updated')
+        expect(json_body['company']).to include('name' => 'Updated')
       end
     end
 

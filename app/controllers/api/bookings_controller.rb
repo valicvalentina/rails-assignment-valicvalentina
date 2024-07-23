@@ -1,6 +1,7 @@
 module Api
   class BookingsController < ApplicationController
     before_action :set_booking, only: [:show, :update, :destroy]
+
     def index
       bookings = Booking.all
       render json: { bookings: BookingSerializer.render_as_json(bookings, view: :extended) }
@@ -8,14 +9,14 @@ module Api
 
     def show
       booking = Booking.find(params[:id])
-      render json: BookingSerializer.render(booking, view: :extended)
+      render json: { booking: BookingSerializer.render_as_json(booking, view: :extended) }
     end
 
     def create
       booking = Booking.new(booking_params)
-
       if booking.save
-        render json: BookingSerializer.render(booking, view: :extended), status: :created
+        render json: { booking: BookingSerializer.render_as_json(booking, view: :extended) },
+               status: :created
       else
         render json: { errors: booking.errors }, status: :bad_request
       end
@@ -24,7 +25,8 @@ module Api
     def update
       booking = Booking.find(params[:id])
       if booking.update(booking_params)
-        render json: BookingSerializer.render(booking, view: :extended), status: :ok
+        render json: { booking: BookingSerializer.render_as_json(booking, view: :extended) },
+               status: :ok
       else
         render json: { errors: booking.errors }, status: :bad_request
       end
