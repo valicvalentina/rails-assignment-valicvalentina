@@ -12,7 +12,7 @@ RSpec.describe 'Bookings API', type: :request do
 
       expect(response).to have_http_status(:ok)
       json_body = JSON.parse(response.body)
-      expect(json_body.size).to eq(3)
+      expect(json_body['bookings'].size).to eq(3)
     end
   end
 

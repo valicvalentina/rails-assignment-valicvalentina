@@ -3,7 +3,8 @@ module Api
     before_action :set_company, only: [:show, :update, :destroy]
 
     def index
-      render json: CompanySerializer.render(Company.all, view: :extended)
+      companies = Company.all
+      render json: { companies: CompanySerializer.render_as_json(companies, view: :extended) }
     end
 
     def show

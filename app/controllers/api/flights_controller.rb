@@ -2,7 +2,8 @@ module Api
   class FlightsController < ApplicationController
     before_action :set_flight, only: [:show, :update, :destroy]
     def index
-      render json: FlightSerializer.render(Flight.all, view: :extended)
+      flights = Flight.all
+      render json: { flights: FlightSerializer.render_as_json(flights, view: :extended) }
     end
 
     def show

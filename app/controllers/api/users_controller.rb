@@ -2,7 +2,8 @@ module Api
   class UsersController < ApplicationController
     before_action :set_user, only: [:show, :update, :destroy]
     def index
-      render json: UserSerializer.render(User.all, view: :extended)
+      users = User.all
+      render json: { users: UserSerializer.render_as_json(users, view: :extended) }
     end
 
     def show

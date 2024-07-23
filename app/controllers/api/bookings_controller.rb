@@ -2,7 +2,8 @@ module Api
   class BookingsController < ApplicationController
     before_action :set_booking, only: [:show, :update, :destroy]
     def index
-      render json: BookingSerializer.render(Booking.all, view: :extended)
+      bookings = Booking.all
+      render json: { bookings: BookingSerializer.render_as_json(bookings, view: :extended) }
     end
 
     def show
