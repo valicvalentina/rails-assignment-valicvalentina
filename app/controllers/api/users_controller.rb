@@ -1,22 +1,22 @@
 module Api
   class UsersController < ApplicationController
     before_action :set_user, only: [:show, :update, :destroy]
+    before_action :set_serializer
 
     def index
       users = User.all
-      render json: { users: UserSerializer.render_as_json(users, view: :extended) }
+      render json: { users: serialize(users, :extended) }
     end
 
     def show
       user = User.find(params[:id])
-      render json: { user: UserSerializer.render_as_json(user, view: :extended) }
+      render json: { user: serialize(user, :extended) }
     end
 
     def create
       user = User.new(user_params)
       if user.save
-        render json: { user: UserSerializer.render_as_json(user, view: :extended) },
-               status: :created
+        render json: { user: serialize(user, :extended) }, status: :created
       else
         render json: { errors: user.errors }, status: :bad_request
       end
@@ -25,7 +25,7 @@ module Api
     def update
       user = User.find(params[:id])
       if user.update(user_params)
-        render json: { user: UserSerializer.render_as_json(user, view: :extended) }, status: :ok
+        render json: { user: serialize(user, :extended) }, status: :ok
       else
         render json: { errors: user.errors }, status: :bad_request
       end
@@ -47,6 +47,31 @@ module Api
 
     def user_params
       params.require(:user).permit(:first_name, :email)
+    end
+
+    def set_serializer
+      @serializer = case request.headers['X-API-SERIALIZER']
+                    when 'fast_jsonapi'
+                      FastJsonapi::UserSerializer
+                    else
+                      UserSerializer
+                    end
+    end
+
+    def serialize(resource, view)
+      if @serializer == FastJsonapi::UserSerializer
+        @serializer.new(resource).serializable_hash
+      else
+        @serializer.render_as_json(resource, view: view)
+      end
+    end
+
+    def serializer_name
+      if @serializer == FastJsonapi::UserSerializer
+        'FastJsonapi'
+      else
+        'Blueprinter'
+      end
     end
   end
 end

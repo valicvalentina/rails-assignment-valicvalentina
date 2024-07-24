@@ -41,7 +41,7 @@ RSpec.describe 'Flights API', type: :request do
   describe 'POST /api/flights' do
     let(:valid_attributes) do
       { flight: { name: 'Zagreb-Bratislava', no_of_seats: 330, departs_at: 1.day.from_now,
-                  arrives_at: 2.days.from_now, base_price: 200.00, company_id: company.id } }
+                  arrives_at: 2.days.from_now, base_price: 200, company_id: company.id } }
     end
 
     context 'when the request is valid' do
@@ -55,7 +55,7 @@ RSpec.describe 'Flights API', type: :request do
         expect(json_body['flight']).to include(
           'name' => 'Zagreb-Bratislava',
           'no_of_seats' => 330,
-          'base_price' => '200.0'
+          'base_price' => 200
         )
       end
     end

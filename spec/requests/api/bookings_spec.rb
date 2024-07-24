@@ -36,7 +36,7 @@ RSpec.describe 'Bookings API', type: :request do
 
   describe 'POST /api/bookings' do
     let(:valid_attributes) do
-      { booking: { no_of_seats: 2, seat_price: 150.00, flight_id: flight.id, user_id: user.id } }
+      { booking: { no_of_seats: 2, seat_price: 150, flight_id: flight.id, user_id: user.id } }
     end
 
     context 'when the request is valid' do
@@ -47,7 +47,7 @@ RSpec.describe 'Bookings API', type: :request do
 
         expect(response).to have_http_status(:created)
         json_body = JSON.parse(response.body)
-        expect(json_body['booking']).to include('no_of_seats' => 2, 'seat_price' => '150.0')
+        expect(json_body['booking']).to include('no_of_seats' => 2, 'seat_price' => 150)
       end
     end
 
