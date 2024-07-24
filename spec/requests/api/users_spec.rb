@@ -6,11 +6,26 @@ RSpec.describe 'Users API', type: :request do
   let!(:users) { create_list(:user, 3) }
 
   describe 'GET /api/users' do
-    it 'successfully returns a list of users' do
-      get '/api/users'
+    context 'when X-API-SERIALIZER-ROOT is 1' do
+      before do
+        get '/api/users', headers: { 'X-API-SERIALIZER-ROOT' => '1' }
+      end
 
-      expect(response).to have_http_status(:ok)
-      expect(json_body['users'].size).to eq(3)
+      it 'successfully returns a list of users with root' do
+        expect(response).to have_http_status(:ok)
+        expect(json_body['users'].size).to eq(3)
+      end
+    end
+
+    context 'when X-API-SERIALIZER-ROOT is 0' do
+      before do
+        get '/api/users', headers: { 'X-API-SERIALIZER-ROOT' => '0' }
+      end
+
+      it 'successfully returns a list of users without root' do
+        expect(response).to have_http_status(:ok)
+        expect(json_body.size).to eq(3)
+      end
     end
   end
 

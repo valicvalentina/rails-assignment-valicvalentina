@@ -5,7 +5,11 @@ module Api
 
     def index
       flights = Flight.all
-      render json: { flights: serialize(flights, :extended) }
+      if request.headers['X-API-SERIALIZER-ROOT'] == '0'
+        render json: serialize(flights, :extended)
+      else
+        render json: { flights: serialize(flights, :extended) }
+      end
     end
 
     def show

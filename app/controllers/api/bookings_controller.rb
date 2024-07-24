@@ -5,7 +5,11 @@ module Api
 
     def index
       bookings = Booking.all
-      render json: { bookings: serialize(bookings, :extended) }
+      if request.headers['X-API-SERIALIZER-ROOT'] == '0'
+        render json: serialize(bookings, :extended)
+      else
+        render json: { bookings: serialize(bookings, :extended) }
+      end
     end
 
     def show

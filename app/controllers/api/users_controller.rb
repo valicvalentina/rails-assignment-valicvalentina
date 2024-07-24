@@ -5,7 +5,11 @@ module Api
 
     def index
       users = User.all
-      render json: { users: serialize(users, :extended) }
+      if request.headers['X-API-SERIALIZER-ROOT'] == '0'
+        render json: serialize(users, :extended)
+      else
+        render json: { users: serialize(users, :extended) }
+      end
     end
 
     def show

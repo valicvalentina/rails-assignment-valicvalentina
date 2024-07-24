@@ -5,7 +5,11 @@ module Api
 
     def index
       companies = Company.all
-      render json: { companies: serialize(companies, :extended) }
+      if request.headers['X-API-SERIALIZER-ROOT'] == '0'
+        render json: serialize(companies, :extended)
+      else
+        render json: { companies: serialize(companies, :extended) }
+      end
     end
 
     def show
