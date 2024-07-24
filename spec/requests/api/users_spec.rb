@@ -1,35 +1,55 @@
 require 'rails_helper'
 
 RSpec.describe 'Users API', type: :request do
-  let!(:users) { FactoryBot.create_list(:user, 3) }
+  include TestHelpers::JsonResponse
+
+  let!(:users) { create_list(:user, 3) }
 
   describe 'GET /api/users' do
     it 'successfully returns a list of users' do
       get '/api/users'
 
       expect(response).to have_http_status(:ok)
-      json_body = JSON.parse(response.body)
       expect(json_body['users'].size).to eq(3)
     end
   end
 
   describe 'GET /api/users/:id' do
-    it 'returns a single user' do
-      get "/api/users/#{users.first.id}"
+    context 'when using Blueprinter' do
+      before do
+        get "/api/users/#{users.first.id}", headers: { 'X-API-SERIALIZER' => 'blueprinter' }
+      end
 
-      expect(response).to have_http_status(:ok)
-      json_body = JSON.parse(response.body)
-      expect(json_body['user']).to include(
-        'first_name',
-        'email'
-      )
+      it 'returns a single user with Blueprinter' do
+        expect(response).to have_http_status(:ok)
+        expect(json_body['user']).to include(
+          'first_name',
+          'email'
+        )
+      end
+    end
+
+    context 'when using FastJsonapi' do
+      before do
+        get "/api/users/#{users.first.id}", headers: { 'X-API-SERIALIZER' => 'fast_jsonapi' }
+      end
+
+      it 'returns a single user with FastJsonapi' do
+        expect(response).to have_http_status(:ok)
+
+        expect(json_body['user']['data']).to include(
+          'attributes' => a_hash_including(
+            'first_name',
+            'email'
+          )
+        )
+      end
     end
 
     it 'returns status 404 if the user does not exist' do
       get '/api/users/999999'
 
       expect(response).to have_http_status(:not_found)
-      json_body = JSON.parse(response.body)
       expect(json_body).to include('error' => "Couldn't find User")
     end
   end
@@ -46,7 +66,6 @@ RSpec.describe 'Users API', type: :request do
         end.to change(User, :count).by(1)
 
         expect(response).to have_http_status(:created)
-        json_body = JSON.parse(response.body)
         expect(json_body['user']).to include(
           'first_name' => 'Valentina',
           'email' => 'valentina.valic@gmail.com'
@@ -62,7 +81,6 @@ RSpec.describe 'Users API', type: :request do
       end
 
       it 'returns a validation failure message' do
-        json_body = JSON.parse(response.body)
         expect(json_body['errors']['first_name']).to include(
           "can't be blank",
           'is too short (minimum is 2 characters)'
@@ -78,7 +96,6 @@ RSpec.describe 'Users API', type: :request do
       it 'updates the user' do
         put "/api/users/#{users.first.id}", params: valid_attributes
         expect(response).to have_http_status(:ok)
-        json_body = JSON.parse(response.body)
         expect(json_body['user']).to include('first_name' => 'Sven')
       end
     end
@@ -91,7 +108,6 @@ RSpec.describe 'Users API', type: :request do
       end
 
       it 'returns a validation failure message' do
-        json_body = JSON.parse(response.body)
         expect(json_body['errors']['first_name']).to include(
           "can't be blank",
           'is too short (minimum is 2 characters)'

@@ -1,35 +1,59 @@
 require 'rails_helper'
 
 RSpec.describe 'Bookings API', type: :request do
-  let!(:company) { FactoryBot.create(:company) }
-  let!(:flight) { FactoryBot.create(:flight, company: company) }
-  let!(:user) { FactoryBot.create(:user) }
-  let!(:bookings) { FactoryBot.create_list(:booking, 3, flight: flight, user: user) }
+  include TestHelpers::JsonResponse
+
+  let!(:company) { create(:company) }
+  let!(:flight) { create(:flight, company: company) }
+  let!(:user) { create(:user) }
+  let!(:bookings) { create_list(:booking, 3, flight: flight, user: user) }
 
   describe 'GET /api/bookings' do
     it 'successfully returns a list of bookings' do
       get '/api/bookings'
 
       expect(response).to have_http_status(:ok)
-      json_body = JSON.parse(response.body)
       expect(json_body['bookings'].size).to eq(3)
     end
   end
 
   describe 'GET /api/bookings/:id' do
-    it 'returns a single booking' do
-      get "/api/bookings/#{bookings.first.id}"
+    context 'when using FastJsonapi' do
+      before do
+        get "/api/bookings/#{bookings.first.id}", headers: { 'X-API-SERIALIZER' => 'fast_jsonapi' }
+      end
 
-      expect(response).to have_http_status(:ok)
-      json_body = JSON.parse(response.body)
-      expect(json_body['booking']).to include('no_of_seats', 'seat_price')
+      it 'returns a single booking with FastJsonapi' do
+        expect(response).to have_http_status(:ok)
+
+        expect(json_body['booking']['data']).to include(
+          'attributes' => a_hash_including(
+            'no_of_seats',
+            'seat_price'
+          )
+        )
+      end
+    end
+
+    context 'when using Blueprinter' do
+      before do
+        get "/api/bookings/#{bookings.first.id}", headers: { 'X-API-SERIALIZER' => 'blueprinter' }
+      end
+
+      it 'returns a single booking with Blueprinter' do
+        expect(response).to have_http_status(:ok)
+
+        expect(json_body['booking']).to include(
+          'no_of_seats',
+          'seat_price'
+        )
+      end
     end
 
     it 'returns status 404 if the booking does not exist' do
       get '/api/bookings/999999'
 
       expect(response).to have_http_status(:not_found)
-      json_body = JSON.parse(response.body)
       expect(json_body).to include('error' => "Couldn't find Booking")
     end
   end
@@ -46,7 +70,6 @@ RSpec.describe 'Bookings API', type: :request do
         end.to change(Booking, :count).by(1)
 
         expect(response).to have_http_status(:created)
-        json_body = JSON.parse(response.body)
         expect(json_body['booking']).to include('no_of_seats' => 2, 'seat_price' => 150)
       end
     end
@@ -59,7 +82,6 @@ RSpec.describe 'Bookings API', type: :request do
       end
 
       it 'returns a validation failure message' do
-        json_body = JSON.parse(response.body)
         expect(json_body['errors']['no_of_seats']).to include("can't be blank")
       end
     end
@@ -72,7 +94,6 @@ RSpec.describe 'Bookings API', type: :request do
       it 'updates the booking' do
         put "/api/bookings/#{bookings.first.id}", params: valid_attributes
         expect(response).to have_http_status(:ok)
-        json_body = JSON.parse(response.body)
         expect(json_body['booking']).to include('no_of_seats' => 3)
       end
     end
@@ -85,7 +106,6 @@ RSpec.describe 'Bookings API', type: :request do
       end
 
       it 'returns a validation failure message' do
-        json_body = JSON.parse(response.body)
         expect(json_body['errors']['no_of_seats']).to include("can't be blank")
       end
     end

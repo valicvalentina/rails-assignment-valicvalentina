@@ -50,9 +50,12 @@ module Api
     end
 
     def set_serializer
-      @serializer = case request.headers['X-API-SERIALIZER']
-                    when 'fast_jsonapi'
-                      FastJsonapi::BookingSerializer
+      @serializer = if action_name == 'show'
+                      if request.headers['X-API-SERIALIZER'] == 'fast_jsonapi'
+                        FastJsonapi::BookingSerializer
+                      else
+                        BookingSerializer
+                      end
                     else
                       BookingSerializer
                     end

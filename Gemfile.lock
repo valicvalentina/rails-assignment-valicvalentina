@@ -90,7 +90,7 @@ GEM
     factory_bot_rails (6.4.3)
       factory_bot (~> 6.4)
       railties (>= 5.0.0)
-    fast_jsonapi (1.5)
+    fast_jsonapi (1.4)
       activesupport (>= 4.2)
     ffi (1.17.0)
     ffi (1.17.0-arm64-darwin)
@@ -142,7 +142,7 @@ GEM
       racc (~> 1.4)
     nokogiri (1.16.6-x86_64-linux)
       racc (~> 1.4)
-    overcommit (0.63.0)
+    overcommit (0.64.0)
       childprocess (>= 0.6.3, < 6)
       iniparse (~> 1.4)
       rexml (~> 3.2)
@@ -151,7 +151,7 @@ GEM
       ast (~> 2.4.1)
       racc
     pg (1.5.6)
-    public_suffix (6.0.0)
+    public_suffix (6.0.1)
     puma (5.6.8)
       nio4r (~> 2.0)
     racc (1.8.0)
@@ -196,7 +196,7 @@ GEM
     rb-inotify (0.11.1)
       ffi (~> 1.0)
     regexp_parser (2.9.2)
-    rexml (3.3.1)
+    rexml (3.3.2)
       strscan
     rspec-core (3.13.0)
       rspec-support (~> 3.13.0)
@@ -233,7 +233,7 @@ GEM
       rack (>= 1.1)
       rubocop (>= 1.33.0, < 2.0)
       rubocop-ast (>= 1.31.1, < 2.0)
-    rubocop-rspec (3.0.2)
+    rubocop-rspec (3.0.3)
       rubocop (~> 1.61)
     ruby-progressbar (1.13.0)
     rubyzip (2.3.2)
@@ -307,7 +307,7 @@ DEPENDENCIES
   blueprinter
   capybara (>= 3.26)
   factory_bot_rails
-  fast_jsonapi
+  fast_jsonapi (= 1.4.0)
   httparty
   jbuilder (~> 2.7)
   listen (~> 3.3)

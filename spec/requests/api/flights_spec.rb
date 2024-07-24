@@ -1,39 +1,60 @@
 require 'rails_helper'
 
 RSpec.describe 'Flights API', type: :request do
-  let!(:company) { FactoryBot.create(:company) }
-  let!(:flights) { FactoryBot.create_list(:flight, 3, company: company) }
+  include TestHelpers::JsonResponse
+
+  let!(:company) { create(:company) }
+  let!(:flights) { create_list(:flight, 3, company: company) }
 
   describe 'GET /api/flights' do
     it 'successfully returns a list of flights' do
       get '/api/flights'
 
       expect(response).to have_http_status(:ok)
-      json_body = JSON.parse(response.body)
       expect(json_body['flights'].size).to eq(3)
     end
   end
 
   describe 'GET /api/flights/:id' do
-    it 'returns a single flight' do
-      get "/api/flights/#{flights.first.id}"
+    context 'when using FastJsonapi' do
+      before do
+        get "/api/flights/#{flights.first.id}", headers: { 'X-API-SERIALIZER' => 'fast_jsonapi' }
+      end
 
-      expect(response).to have_http_status(:ok)
-      json_body = JSON.parse(response.body)
-      expect(json_body['flight']).to include(
-        'name',
-        'departs_at',
-        'arrives_at',
-        'base_price',
-        'no_of_seats'
-      )
+      it 'returns a single flight with FastJsonapi' do
+        expect(response).to have_http_status(:ok)
+
+        expect(json_body['flight']['data']).to include(
+          'attributes' => a_hash_including(
+            'name', 'departs_at', 'arrives_at', 'base_price',
+            'no_of_seats'
+          )
+        )
+      end
+    end
+
+    context 'when using Blueprinter' do
+      before do
+        get "/api/flights/#{flights.first.id}", headers: { 'X-API-SERIALIZER' => 'blueprinter' }
+      end
+
+      it 'returns a single flight with Blueprinter' do
+        expect(response).to have_http_status(:ok)
+
+        expect(json_body['flight']).to include(
+          'name',
+          'departs_at',
+          'arrives_at',
+          'base_price',
+          'no_of_seats'
+        )
+      end
     end
 
     it 'returns status 404 if the flight does not exist' do
       get '/api/flights/999999'
 
       expect(response).to have_http_status(:not_found)
-      json_body = JSON.parse(response.body)
       expect(json_body).to include('error' => "Couldn't find Flight")
     end
   end
@@ -51,7 +72,6 @@ RSpec.describe 'Flights API', type: :request do
         end.to change(Flight, :count).by(1)
 
         expect(response).to have_http_status(:created)
-        json_body = JSON.parse(response.body)
         expect(json_body['flight']).to include(
           'name' => 'Zagreb-Bratislava',
           'no_of_seats' => 330,
@@ -68,7 +88,6 @@ RSpec.describe 'Flights API', type: :request do
       end
 
       it 'returns a validation failure message' do
-        json_body = JSON.parse(response.body)
         expect(json_body['errors']['name']).to include("can't be blank")
       end
     end
@@ -81,7 +100,6 @@ RSpec.describe 'Flights API', type: :request do
       it 'updates the flight' do
         put "/api/flights/#{flights.first.id}", params: valid_attributes
         expect(response).to have_http_status(:ok)
-        json_body = JSON.parse(response.body)
         expect(json_body['flight']).to include('name' => 'Updated Flight')
       end
     end
@@ -94,7 +112,6 @@ RSpec.describe 'Flights API', type: :request do
       end
 
       it 'returns a validation failure message' do
-        json_body = JSON.parse(response.body)
         expect(json_body['errors']['name']).to include("can't be blank")
       end
     end

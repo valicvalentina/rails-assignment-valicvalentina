@@ -4,8 +4,6 @@ module FastJsonapi
 
     attributes :no_of_seats, :created_at, :updated_at
 
-    attribute :id, &:id
-
     attribute :seat_price do |booking|
       booking.seat_price.to_f.to_i
     end

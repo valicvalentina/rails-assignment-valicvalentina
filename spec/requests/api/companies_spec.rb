@@ -1,32 +1,55 @@
 require 'rails_helper'
 
 RSpec.describe 'Companies API', type: :request do
-  let!(:companies) { FactoryBot.create_list(:company, 3) }
+  include TestHelpers::JsonResponse
+
+  let!(:companies) { create_list(:company, 3) }
 
   describe 'GET /api/companies' do
     it 'successfully returns a list of companies' do
       get '/api/companies'
 
       expect(response).to have_http_status(:ok)
-      json_body = JSON.parse(response.body)
       expect(json_body['companies'].size).to eq(3)
     end
   end
 
   describe 'GET /api/companies/:id' do
-    it 'returns a single company' do
-      get "/api/companies/#{companies.first.id}"
+    context 'when using FastJsonapi' do
+      before do
+        get "/api/companies/#{companies.first.id}",
+            headers: { 'X-API-SERIALIZER' => 'fast_jsonapi' }
+      end
 
-      expect(response).to have_http_status(:ok)
-      json_body = JSON.parse(response.body)
-      expect(json_body['company']).to include('name')
+      it 'returns a single company with FastJsonapi' do
+        expect(response).to have_http_status(:ok)
+
+        expect(json_body['company']['data']).to include(
+          'attributes' => a_hash_including(
+            'name'
+          )
+        )
+      end
+    end
+
+    context 'when using Blueprinter' do
+      before do
+        get "/api/companies/#{companies.first.id}", headers: { 'X-API-SERIALIZER' => 'blueprinter' }
+      end
+
+      it 'returns a single company with Blueprinter' do
+        expect(response).to have_http_status(:ok)
+
+        expect(json_body['company']).to include(
+          'name'
+        )
+      end
     end
 
     it 'returns status 404 if the company does not exist' do
       get '/api/companies/999999'
 
       expect(response).to have_http_status(:not_found)
-      json_body = JSON.parse(response.body)
       expect(json_body).to include('error' => "Couldn't find Company")
     end
   end
@@ -41,7 +64,6 @@ RSpec.describe 'Companies API', type: :request do
         end.to change(Company, :count).by(1)
 
         expect(response).to have_http_status(:created)
-        json_body = JSON.parse(response.body)
         expect(json_body['company']).to include('name' => 'New Company')
       end
     end
@@ -54,7 +76,6 @@ RSpec.describe 'Companies API', type: :request do
       end
 
       it 'returns a validation failure message' do
-        json_body = JSON.parse(response.body)
         expect(json_body['errors']['name']).to include("can't be blank")
       end
     end
@@ -67,7 +88,6 @@ RSpec.describe 'Companies API', type: :request do
       it 'updates the company' do
         put "/api/companies/#{companies.first.id}", params: valid_attributes
         expect(response).to have_http_status(:ok)
-        json_body = JSON.parse(response.body)
         expect(json_body['company']).to include('name' => 'Updated')
       end
     end
@@ -80,7 +100,6 @@ RSpec.describe 'Companies API', type: :request do
       end
 
       it 'returns a validation failure message' do
-        json_body = JSON.parse(response.body)
         expect(json_body['errors']['name']).to include("can't be blank")
       end
     end

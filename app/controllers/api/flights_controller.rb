@@ -51,9 +51,12 @@ module Api
     end
 
     def set_serializer
-      @serializer = case request.headers['X-API-SERIALIZER']
-                    when 'fast_jsonapi'
-                      FastJsonapi::FlightSerializer
+      @serializer = if action_name == 'show'
+                      if request.headers['X-API-SERIALIZER'] == 'fast_jsonapi'
+                        FastJsonapi::FlightSerializer
+                      else
+                        FlightSerializer
+                      end
                     else
                       FlightSerializer
                     end
