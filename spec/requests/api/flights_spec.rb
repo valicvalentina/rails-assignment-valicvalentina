@@ -111,7 +111,7 @@ RSpec.describe 'Flights API', type: :request do
   describe 'PUT /api/flights/:id' do
     let(:valid_attributes) { { flight: { name: 'Updated Flight' } } }
 
-    context 'when the record exists' do
+    context 'when the request is valid' do
       it 'updates the flight' do
         put "/api/flights/#{flights.first.id}", params: valid_attributes
         expect(response).to have_http_status(:ok)
@@ -133,12 +133,25 @@ RSpec.describe 'Flights API', type: :request do
   end
 
   describe 'DELETE /api/flights/:id' do
-    it 'deletes the flight' do
-      expect do
-        delete "/api/flights/#{flights.first.id}"
-      end.to change(Flight, :count).by(-1)
+    context 'when the request is valid' do
+      it 'deletes the flight' do
+        expect do
+          delete "/api/flights/#{flights.first.id}"
+        end.to change(Flight, :count).by(-1)
 
-      expect(response).to have_http_status(:no_content)
+        expect(response).to have_http_status(:no_content)
+      end
+    end
+
+    context 'when the request is invalid' do
+      it 'returns a not found error' do
+        non_existent_flight_id = 99_999
+
+        delete "/api/flights/#{non_existent_flight_id}"
+
+        expect(response).to have_http_status(:not_found)
+        expect(json_body['error']).to eq("Couldn't find Flight")
+      end
     end
   end
 end

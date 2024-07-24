@@ -107,7 +107,7 @@ RSpec.describe 'Users API', type: :request do
   describe 'PUT /api/users/:id' do
     let(:valid_attributes) { { user: { first_name: 'Sven' } } }
 
-    context 'when the record exists' do
+    context 'when the request is valid' do
       it 'updates the user' do
         put "/api/users/#{users.first.id}", params: valid_attributes
         expect(response).to have_http_status(:ok)
@@ -132,12 +132,25 @@ RSpec.describe 'Users API', type: :request do
   end
 
   describe 'DELETE /api/users/:id' do
-    it 'deletes the user' do
-      expect do
-        delete "/api/users/#{users.first.id}"
-      end.to change(User, :count).by(-1)
+    context 'when the request is valid' do
+      it 'deletes the user' do
+        expect do
+          delete "/api/users/#{users.first.id}"
+        end.to change(User, :count).by(-1)
 
-      expect(response).to have_http_status(:no_content)
+        expect(response).to have_http_status(:no_content)
+      end
+    end
+
+    context 'when the request is invalid' do
+      it 'returns a not found error' do
+        non_existent_user_id = 99_999
+
+        delete "/api/users/#{non_existent_user_id}"
+
+        expect(response).to have_http_status(:not_found)
+        expect(json_body['error']).to eq("Couldn't find User")
+      end
     end
   end
 end

@@ -99,7 +99,7 @@ RSpec.describe 'Companies API', type: :request do
   describe 'PUT /api/companies/:id' do
     let(:valid_attributes) { { company: { name: 'Updated' } } }
 
-    context 'when the record exists' do
+    context 'when the request is valid' do
       it 'updates the company' do
         put "/api/companies/#{companies.first.id}", params: valid_attributes
         expect(response).to have_http_status(:ok)
@@ -121,12 +121,25 @@ RSpec.describe 'Companies API', type: :request do
   end
 
   describe 'DELETE /api/companies/:id' do
-    it 'deletes the company' do
-      expect do
-        delete "/api/companies/#{companies.first.id}"
-      end.to change(Company, :count).by(-1)
+    context 'when the request is valid' do
+      it 'deletes the company' do
+        expect do
+          delete "/api/companies/#{companies.first.id}"
+        end.to change(Company, :count).by(-1)
 
-      expect(response).to have_http_status(:no_content)
+        expect(response).to have_http_status(:no_content)
+      end
+    end
+
+    context 'when the request is invalid' do
+      it 'returns a not found error' do
+        non_existent_company_id = 99_999
+
+        delete "/api/companies/#{non_existent_company_id}"
+
+        expect(response).to have_http_status(:not_found)
+        expect(json_body['error']).to eq("Couldn't find Company")
+      end
     end
   end
 end
