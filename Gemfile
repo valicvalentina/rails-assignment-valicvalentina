@@ -42,6 +42,10 @@ gem 'factory_bot_rails'
 
 gem 'shoulda-matchers'
 
+gem 'blueprinter'
+
+gem 'fast_jsonapi', '1.4.0'
+
 group :development do
   # Access an interactive console on exception pages or by calling 'console' anywhere in the code.
   gem 'listen', '~> 3.3'
