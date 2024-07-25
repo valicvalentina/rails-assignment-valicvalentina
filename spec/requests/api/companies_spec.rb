@@ -7,22 +7,16 @@ RSpec.describe 'Companies API', type: :request do
 
   describe 'GET /api/companies' do
     context 'when X-API-SERIALIZER-ROOT is 1' do
-      before do
-        get '/api/companies', headers: { 'X-API-SERIALIZER-ROOT' => '1' }
-      end
-
       it 'successfully returns a list of companies with root' do
+        get '/api/companies', headers: { 'X-API-SERIALIZER-ROOT' => '1' }
         expect(response).to have_http_status(:ok)
         expect(json_body['companies'].size).to eq(3)
       end
     end
 
     context 'when X-API-SERIALIZER-ROOT is 0' do
-      before do
-        get '/api/companies', headers: { 'X-API-SERIALIZER-ROOT' => '0' }
-      end
-
       it 'successfully returns a list of companies without root' do
+        get '/api/companies', headers: { 'X-API-SERIALIZER-ROOT' => '0' }
         expect(response).to have_http_status(:ok)
         expect(json_body.size).to eq(3)
       end
@@ -31,12 +25,9 @@ RSpec.describe 'Companies API', type: :request do
 
   describe 'GET /api/companies/:id' do
     context 'when using FastJsonapi' do
-      before do
+      it 'returns a single company with FastJsonapi' do
         get "/api/companies/#{companies.first.id}",
             headers: { 'X-API-SERIALIZER' => 'fast_jsonapi' }
-      end
-
-      it 'returns a single company with FastJsonapi' do
         expect(response).to have_http_status(:ok)
 
         expect(json_body['company']['data']).to include(
@@ -48,11 +39,8 @@ RSpec.describe 'Companies API', type: :request do
     end
 
     context 'when using Blueprinter' do
-      before do
-        get "/api/companies/#{companies.first.id}", headers: { 'X-API-SERIALIZER' => 'blueprinter' }
-      end
-
       it 'returns a single company with Blueprinter' do
+        get "/api/companies/#{companies.first.id}", headers: { 'X-API-SERIALIZER' => 'blueprinter' }
         expect(response).to have_http_status(:ok)
 
         expect(json_body['company']).to include(

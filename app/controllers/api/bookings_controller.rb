@@ -1,5 +1,5 @@
 module Api
-  class BookingsController < ApplicationController
+  class BookingsController < Api::BaseController
     before_action :set_booking, only: [:show, :update, :destroy]
     before_action :set_serializer
 
@@ -51,34 +51,6 @@ module Api
 
     def booking_params
       params.require(:booking).permit(:flight_id, :user_id, :no_of_seats, :seat_price)
-    end
-
-    def set_serializer
-      @serializer = if action_name == 'show'
-                      if request.headers['X-API-SERIALIZER'] == 'fast_jsonapi'
-                        FastJsonapi::BookingSerializer
-                      else
-                        BookingSerializer
-                      end
-                    else
-                      BookingSerializer
-                    end
-    end
-
-    def serialize(resource, view)
-      if @serializer == FastJsonapi::BookingSerializer
-        @serializer.new(resource).serializable_hash
-      else
-        @serializer.render_as_json(resource, view: view)
-      end
-    end
-
-    def serializer_name
-      if @serializer == FastJsonapi::BookingSerializer
-        'FastJsonapi'
-      else
-        'Blueprinter'
-      end
     end
   end
 end

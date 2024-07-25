@@ -8,22 +8,16 @@ RSpec.describe 'Flights API', type: :request do
 
   describe 'GET /api/flights' do
     context 'when X-API-SERIALIZER-ROOT is 1' do
-      before do
-        get '/api/flights', headers: { 'X-API-SERIALIZER-ROOT' => '1' }
-      end
-
       it 'successfully returns a list of flights with root' do
+        get '/api/flights', headers: { 'X-API-SERIALIZER-ROOT' => '1' }
         expect(response).to have_http_status(:ok)
         expect(json_body['flights'].size).to eq(3)
       end
     end
 
     context 'when X-API-SERIALIZER-ROOT is 0' do
-      before do
-        get '/api/flights', headers: { 'X-API-SERIALIZER-ROOT' => '0' }
-      end
-
       it 'successfully returns a list of flights without root' do
+        get '/api/flights', headers: { 'X-API-SERIALIZER-ROOT' => '0' }
         expect(response).to have_http_status(:ok)
         expect(json_body.size).to eq(3)
       end
@@ -32,11 +26,8 @@ RSpec.describe 'Flights API', type: :request do
 
   describe 'GET /api/flights/:id' do
     context 'when using FastJsonapi' do
-      before do
-        get "/api/flights/#{flights.first.id}", headers: { 'X-API-SERIALIZER' => 'fast_jsonapi' }
-      end
-
       it 'returns a single flight with FastJsonapi' do
+        get "/api/flights/#{flights.first.id}", headers: { 'X-API-SERIALIZER' => 'fast_jsonapi' }
         expect(response).to have_http_status(:ok)
 
         expect(json_body['flight']['data']).to include(
@@ -49,11 +40,8 @@ RSpec.describe 'Flights API', type: :request do
     end
 
     context 'when using Blueprinter' do
-      before do
-        get "/api/flights/#{flights.first.id}", headers: { 'X-API-SERIALIZER' => 'blueprinter' }
-      end
-
       it 'returns a single flight with Blueprinter' do
+        get "/api/flights/#{flights.first.id}", headers: { 'X-API-SERIALIZER' => 'blueprinter' }
         expect(response).to have_http_status(:ok)
 
         expect(json_body['flight']).to include(

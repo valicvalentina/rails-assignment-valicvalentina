@@ -7,22 +7,16 @@ RSpec.describe 'Users API', type: :request do
 
   describe 'GET /api/users' do
     context 'when X-API-SERIALIZER-ROOT is 1' do
-      before do
-        get '/api/users', headers: { 'X-API-SERIALIZER-ROOT' => '1' }
-      end
-
       it 'successfully returns a list of users with root' do
+        get '/api/users', headers: { 'X-API-SERIALIZER-ROOT' => '1' }
         expect(response).to have_http_status(:ok)
         expect(json_body['users'].size).to eq(3)
       end
     end
 
     context 'when X-API-SERIALIZER-ROOT is 0' do
-      before do
-        get '/api/users', headers: { 'X-API-SERIALIZER-ROOT' => '0' }
-      end
-
       it 'successfully returns a list of users without root' do
+        get '/api/users', headers: { 'X-API-SERIALIZER-ROOT' => '0' }
         expect(response).to have_http_status(:ok)
         expect(json_body.size).to eq(3)
       end
@@ -31,11 +25,8 @@ RSpec.describe 'Users API', type: :request do
 
   describe 'GET /api/users/:id' do
     context 'when using Blueprinter' do
-      before do
-        get "/api/users/#{users.first.id}", headers: { 'X-API-SERIALIZER' => 'blueprinter' }
-      end
-
       it 'returns a single user with Blueprinter' do
+        get "/api/users/#{users.first.id}", headers: { 'X-API-SERIALIZER' => 'blueprinter' }
         expect(response).to have_http_status(:ok)
         expect(json_body['user']).to include(
           'first_name',
@@ -45,11 +36,8 @@ RSpec.describe 'Users API', type: :request do
     end
 
     context 'when using FastJsonapi' do
-      before do
-        get "/api/users/#{users.first.id}", headers: { 'X-API-SERIALIZER' => 'fast_jsonapi' }
-      end
-
       it 'returns a single user with FastJsonapi' do
+        get "/api/users/#{users.first.id}", headers: { 'X-API-SERIALIZER' => 'fast_jsonapi' }
         expect(response).to have_http_status(:ok)
 
         expect(json_body['user']['data']).to include(

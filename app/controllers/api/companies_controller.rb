@@ -1,5 +1,5 @@
 module Api
-  class CompaniesController < ApplicationController
+  class CompaniesController < Api::BaseController
     before_action :set_company, only: [:show, :update, :destroy]
     before_action :set_serializer
 
@@ -51,34 +51,6 @@ module Api
 
     def company_params
       params.require(:company).permit(:name)
-    end
-
-    def set_serializer
-      @serializer = if action_name == 'show'
-                      if request.headers['X-API-SERIALIZER'] == 'fast_jsonapi'
-                        FastJsonapi::CompanySerializer
-                      else
-                        CompanySerializer
-                      end
-                    else
-                      CompanySerializer
-                    end
-    end
-
-    def serialize(resource, view)
-      if @serializer == FastJsonapi::CompanySerializer
-        @serializer.new(resource).serializable_hash
-      else
-        @serializer.render_as_json(resource, view: view)
-      end
-    end
-
-    def serializer_name
-      if @serializer == FastJsonapi::CompanySerializer
-        'FastJsonapi'
-      else
-        'Blueprinter'
-      end
     end
   end
 end

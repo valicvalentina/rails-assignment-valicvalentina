@@ -1,5 +1,5 @@
 module Api
-  class UsersController < ApplicationController
+  class UsersController < Api::BaseController
     before_action :set_user, only: [:show, :update, :destroy]
     before_action :set_serializer
 
@@ -51,34 +51,6 @@ module Api
 
     def user_params
       params.require(:user).permit(:first_name, :last_name, :email)
-    end
-
-    def set_serializer
-      @serializer = if action_name == 'show'
-                      if request.headers['X-API-SERIALIZER'] == 'fast_jsonapi'
-                        FastJsonapi::UserSerializer
-                      else
-                        UserSerializer
-                      end
-                    else
-                      UserSerializer
-                    end
-    end
-
-    def serialize(resource, view)
-      if @serializer == FastJsonapi::UserSerializer
-        @serializer.new(resource).serializable_hash
-      else
-        @serializer.render_as_json(resource, view: view)
-      end
-    end
-
-    def serializer_name
-      if @serializer == FastJsonapi::UserSerializer
-        'FastJsonapi'
-      else
-        'Blueprinter'
-      end
     end
   end
 end
