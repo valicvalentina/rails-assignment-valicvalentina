@@ -2,6 +2,7 @@ module Api
   class CompaniesController < Api::BaseController
     before_action :set_company, only: [:show, :update, :destroy]
     before_action :set_serializer
+    before_action :authorize_admin!, except: [:index, :show]
 
     def index
       companies = Company.all

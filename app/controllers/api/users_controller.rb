@@ -1,7 +1,11 @@
 module Api
   class UsersController < Api::BaseController
-    before_action :set_user, only: [:show, :update, :destroy]
+    before_action :set_user, only: [:show, :update, :destroy, :change_password]
     before_action :set_serializer
+    before_action :authenticate_user!
+    before_action :authorize_admin!, only: [:index]
+    before_action :authorize_user_users!, only: [:show, :update, :destroy]
+    before_action :authorize_update_role, only: [:update]
 
     def index
       users = User.all
@@ -35,6 +39,15 @@ module Api
       end
     end
 
+    def change_password
+      user = User.find(params[:id])
+      if user.update(password_params)
+        render json: { user: serialize(user, :extended) }, status: :ok
+      else
+        render json: { errors: user.errors }, status: :bad_request
+      end
+    end
+
     def destroy
       user = User.find(params[:id])
       user.destroy
@@ -50,7 +63,17 @@ module Api
     end
 
     def user_params
-      params.require(:user).permit(:first_name, :last_name, :email)
+      if current_user.admin?
+        params.require(:user).permit(:first_name, :last_name, :email, :password,
+                                     :password_confirmation, :role)
+      else
+        params.require(:user).permit(:first_name, :last_name, :email, :password,
+                                     :password_confirmation)
+      end
+    end
+
+    def password_params
+      params.require(:user).permit(:password, :password_confirmation)
     end
   end
 end
