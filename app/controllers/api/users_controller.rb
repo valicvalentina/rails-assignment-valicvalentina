@@ -22,9 +22,9 @@ module Api
     end
 
     def create
-      user = User.new(user_params)
       token = request.headers['Authorization']
       @current_user = User.find_by(token: token)
+      user = User.new(user_params)
       if user.save
         render json: { user: serialize(user, :extended) }, status: :created
       else
