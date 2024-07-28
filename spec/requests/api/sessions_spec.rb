@@ -25,12 +25,15 @@ RSpec.describe 'Sessions API', type: :request do
       it 'returns a session token and user information' do
         post '/api/session', params: valid_credentials
 
-        expect(response).to have_http_status(:ok)
+        expect(response).to have_http_status(:created)
 
         json_body = JSON.parse(response.body)
-        expect(json_body).to include('token')
-        expect(json_body['user']).to include(
-          'id', 'first_name', 'last_name', 'email'
+        expect(json_body['session']).to include('token')
+        expect(json_body['session']['user']).to include(
+          'id',
+          'first_name',
+          'last_name',
+          'email'
         )
       end
     end
@@ -39,7 +42,7 @@ RSpec.describe 'Sessions API', type: :request do
       it 'returns an error message' do
         post '/api/session', params: invalid_credentials
 
-        expect(response).to have_http_status(:unauthorized)
+        expect(response).to have_http_status(:bad_request)
         json_body = JSON.parse(response.body)
         expect(json_body['errors']).to include('credentials' => ['are invalid'])
       end

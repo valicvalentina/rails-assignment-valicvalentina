@@ -81,7 +81,7 @@ RSpec.describe 'Bookings API', type: :request do
         other_user = create(:user)
         other_booking = create(:booking, user: other_user, flight: flight)
         get "/api/bookings/#{other_booking.id}", headers: valid_headers(user)
-        expect(response).to have_http_status(:not_found)
+        expect(response).to have_http_status(:forbidden)
       end
     end
   end

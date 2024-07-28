@@ -21,7 +21,9 @@ module Api
       if booking
         render json: { booking: serialize(booking, :extended) }
       else
-        render json: { errors: { resource: ['forbidden'] } }, status: :not_found
+        render json: {
+          errors: { resource: ['is forbidden'] }
+        }, status: :forbidden
       end
     end
 

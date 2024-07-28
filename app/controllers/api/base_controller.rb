@@ -81,7 +81,7 @@ module Api
       @booking = Booking.find(params[:id])
       return if current_user.admin? || current_user == @booking.user
 
-      render json: { errors: { message: 'Unauthorized' } },
+      render json: { errors: { resource: ['is forbidden'] } },
              status: :forbidden
     end
   end
