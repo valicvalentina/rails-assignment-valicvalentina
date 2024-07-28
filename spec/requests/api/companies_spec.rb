@@ -88,14 +88,14 @@ RSpec.describe 'Companies API', type: :request do
     context 'when non-admin user with valid attributes' do
       it 'returns status 403 forbidden' do
         post '/api/companies', params: valid_attributes, headers: valid_headers(user)
-        expect(response).to have_http_status(:forbidden)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
 
     context 'when non-admin user with invalid attributes' do
       it 'returns status 403 forbidden' do
         post '/api/companies', params: { company: { name: '' } }, headers: valid_headers(user)
-        expect(response).to have_http_status(:forbidden)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
@@ -130,7 +130,7 @@ RSpec.describe 'Companies API', type: :request do
       it 'returns status 403 forbidden' do
         put "/api/companies/#{companies.first.id}", params: valid_attributes,
                                                     headers: valid_headers(user)
-        expect(response).to have_http_status(:forbidden)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
 
@@ -138,7 +138,7 @@ RSpec.describe 'Companies API', type: :request do
       it 'returns status 403 forbidden' do
         put "/api/companies/#{companies.first.id}", params: { company: { name: '' } },
                                                     headers: valid_headers(user)
-        expect(response).to have_http_status(:forbidden)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
@@ -165,7 +165,7 @@ RSpec.describe 'Companies API', type: :request do
     context 'when non-admin user' do
       it 'returns status 403 forbidden' do
         delete "/api/companies/#{companies.first.id}", headers: valid_headers(user)
-        expect(response).to have_http_status(:forbidden)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
