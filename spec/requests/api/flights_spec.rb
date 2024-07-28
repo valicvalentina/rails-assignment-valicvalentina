@@ -96,14 +96,14 @@ RSpec.describe 'Flights API', type: :request do
     context 'when non-admin user with valid attributes' do
       it 'returns status 403 forbidden' do
         post '/api/flights', params: valid_attributes, headers: valid_headers(user)
-        expect(response).to have_http_status(:unauthorized)
+        expect(response).to have_http_status(:forbidden)
       end
     end
 
     context 'when non-admin user with invalid attributes' do
       it 'returns status 403 forbidden' do
         post '/api/flights', params: { flight: { name: '' } }, headers: valid_headers(user)
-        expect(response).to have_http_status(:unauthorized)
+        expect(response).to have_http_status(:forbidden)
       end
     end
   end
@@ -138,7 +138,7 @@ RSpec.describe 'Flights API', type: :request do
       it 'returns status 403 forbidden' do
         put "/api/flights/#{flights.first.id}", params: valid_attributes,
                                                 headers: valid_headers(user)
-        expect(response).to have_http_status(:unauthorized)
+        expect(response).to have_http_status(:forbidden)
       end
     end
 
@@ -146,7 +146,7 @@ RSpec.describe 'Flights API', type: :request do
       it 'returns status 403 forbidden' do
         put "/api/flights/#{flights.first.id}", params: { flight: { name: '' } },
                                                 headers: valid_headers(user)
-        expect(response).to have_http_status(:unauthorized)
+        expect(response).to have_http_status(:forbidden)
       end
     end
   end
@@ -174,7 +174,7 @@ RSpec.describe 'Flights API', type: :request do
     context 'when non-admin user' do
       it 'returns status 403 forbidden' do
         delete "/api/flights/#{flights.first.id}", headers: valid_headers(user)
-        expect(response).to have_http_status(:unauthorized)
+        expect(response).to have_http_status(:forbidden)
       end
     end
   end

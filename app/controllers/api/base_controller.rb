@@ -43,8 +43,8 @@ module Api
       return if current_user&.admin?
 
       render json: {
-        errors: { resource: ['is invalid'] }
-      }, status: :unauthorized
+        errors: { resource: ['is forbidden'] }
+      }, status: :forbidden
     end
 
     def authorize_user_users!

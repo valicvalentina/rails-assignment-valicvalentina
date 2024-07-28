@@ -18,9 +18,9 @@ RSpec.describe 'Users API', type: :request do
     end
 
     context 'when non-admin' do
-      it 'returns unauthorized status' do
+      it 'returns forbidden status' do
         get '/api/users', headers: valid_headers(user)
-        expect(response).to have_http_status(:unauthorized)
+        expect(response).to have_http_status(:forbidden)
       end
     end
   end
