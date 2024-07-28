@@ -23,6 +23,8 @@ module Api
 
     def create
       user = User.new(user_params)
+      token = request.headers['Authorization']
+      @current_user = User.find_by(token: token)
       if user.save
         render json: { user: serialize(user, :extended) }, status: :created
       else
@@ -63,8 +65,13 @@ module Api
     end
 
     def user_params
-      params.require(:user).permit(:first_name, :last_name, :email, :password,
-                                   :password_confirmation, :role)
+      if current_user&.admin?
+        params.require(:user).permit(:first_name, :last_name, :email, :password,
+                                     :password_confirmation, :role)
+      else
+        params.require(:user).permit(:first_name, :last_name, :email, :password,
+                                     :password_confirmation)
+      end
     end
 
     def password_params
