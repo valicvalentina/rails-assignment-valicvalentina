@@ -84,5 +84,14 @@ module Api
       render json: { errors: { resource: ['is forbidden'] } },
              status: :forbidden
     end
+
+    def build_booking
+      if current_user.admin? && booking_params[:user_id]
+        user = find_user
+        user.bookings.build(booking_params.except(:user_id))
+      else
+        current_user.bookings.build(booking_params)
+      end
+    end
   end
 end
