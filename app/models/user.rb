@@ -19,4 +19,9 @@ class User < ApplicationRecord
   def public?
     role.nil?
   end
+
+  def regenerate_token
+    self.token = SecureRandom.hex(10)
+    save(validate: false)
+  end
 end

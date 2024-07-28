@@ -63,13 +63,8 @@ module Api
     end
 
     def user_params
-      if current_user&.admin?
-        params.require(:user).permit(:first_name, :last_name, :email, :password,
-                                     :password_confirmation, :role)
-      else
-        params.require(:user).permit(:first_name, :last_name, :email, :password,
-                                     :password_confirmation)
-      end
+      params.require(:user).permit(:first_name, :last_name, :email, :password,
+                                   :password_confirmation, :role)
     end
 
     def password_params

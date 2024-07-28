@@ -17,6 +17,7 @@ module Api
 
     def destroy
       if current_user
+        current_user.regenerate_token
         head :no_content
       else
         render json: { errors: { token: ['is invalid'] } }, status: :unauthorized
