@@ -76,5 +76,14 @@ module Api
         params.require(:booking).permit(:flight_id, :no_of_seats, :seat_price)
       end
     end
+
+    def build_booking
+      if current_user.admin? && booking_params[:user_id]
+        user = User.find(booking_params[:user_id])
+        user.bookings.build(booking_params.except(:user_id))
+      else
+        current_user.bookings.build(booking_params)
+      end
+    end
   end
 end
