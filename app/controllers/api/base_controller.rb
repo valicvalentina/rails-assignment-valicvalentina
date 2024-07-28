@@ -43,7 +43,7 @@ module Api
       return if current_user&.admin?
 
       render json: {
-        errors: { resource: ['forbidden'] }
+        errors: { resource: ['is forbidden'] }
       }, status: :forbidden
     end
 
@@ -53,7 +53,7 @@ module Api
       user = User.find(params[:id])
       return if current_user.admin? || current_user == user
 
-      render json: { errors: { resource: ['forbidden'] } },
+      render json: { errors: { resource: ['is forbidden'] } },
              status: :forbidden
     end
 
