@@ -62,10 +62,10 @@ RSpec.describe 'Users API', type: :request do
                 password: 'Secret123' } }
     end
 
-    context 'when admin with valid attributes' do
+    context 'when valid attributes' do
       it 'creates a new user' do
         expect do
-          post '/api/users', params: valid_attributes, headers: valid_headers(admin)
+          post '/api/users', params: valid_attributes
         end.to change(User, :count).by(1)
 
         expect(response).to have_http_status(:created)
@@ -74,9 +74,9 @@ RSpec.describe 'Users API', type: :request do
       end
     end
 
-    context 'when admin with invalid attributes' do
+    context 'when invalid attributes' do
       before do
-        post '/api/users', params: { user: { first_name: '' } }, headers: valid_headers(admin)
+        post '/api/users', params: { user: { first_name: '' } }
       end
 
       it 'returns status code 400' do
@@ -88,13 +88,6 @@ RSpec.describe 'Users API', type: :request do
           "can't be blank",
           'is too short (minimum is 2 characters)'
         )
-      end
-    end
-
-    context 'when non-admin' do
-      it 'creates a new user' do
-        post '/api/users', params: valid_attributes, headers: valid_headers(user)
-        expect(response).to have_http_status(:created)
       end
     end
   end

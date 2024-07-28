@@ -2,7 +2,7 @@ module Api
   class UsersController < Api::BaseController
     before_action :set_user, only: [:show, :update, :destroy, :change_password]
     before_action :set_serializer
-    before_action :authenticate_user!
+    before_action :authenticate_user!, only: [:index, :show, :update, :destroy]
     before_action :authorize_admin!, only: [:index]
     before_action :authorize_user_users!, only: [:show, :update, :destroy]
     before_action :authorize_update_role, only: [:update]
@@ -63,7 +63,7 @@ module Api
     end
 
     def user_params
-      if current_user.admin?
+      if current_user&.admin?
         params.require(:user).permit(:first_name, :last_name, :email, :password,
                                      :password_confirmation, :role)
       else
