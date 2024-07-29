@@ -2,6 +2,7 @@ module Api
   class FlightsController < Api::BaseController
     before_action :set_flight, only: [:show, :update, :destroy]
     before_action :set_serializer
+    before_action :session_user
     before_action :authenticate_user!, except: [:index, :show]
     before_action :authorize_admin!, except: [:index, :show]
 

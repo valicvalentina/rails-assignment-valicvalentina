@@ -1,10 +1,11 @@
 module Api
   class UsersController < Api::BaseController
-    before_action :set_user, only: [:show, :update, :destroy, :change_password]
+    before_action :set_user, only: [:show, :update, :destroy]
     before_action :set_serializer
+    before_action :session_user
     before_action :authenticate_user!, only: [:index, :show, :update, :destroy]
     before_action :authorize_admin!, only: [:index]
-    before_action :authorize_user_users!, only: [:show, :update, :destroy]
+    before_action :authorize_user_or_admin!, only: [:show, :update, :destroy]
     before_action :authorize_update_role, only: [:update]
 
     def index
@@ -22,8 +23,6 @@ module Api
     end
 
     def create
-      token = request.headers['Authorization']
-      @current_user = User.find_by(token: token)
       user = User.new(user_params)
       if user.save
         render json: { user: serialize(user, :extended) }, status: :created
@@ -35,15 +34,6 @@ module Api
     def update
       user = User.find(params[:id])
       if user.update(user_params)
-        render json: { user: serialize(user, :extended) }, status: :ok
-      else
-        render json: { errors: user.errors }, status: :bad_request
-      end
-    end
-
-    def change_password
-      user = User.find(params[:id])
-      if user.update(password_params)
         render json: { user: serialize(user, :extended) }, status: :ok
       else
         render json: { errors: user.errors }, status: :bad_request
@@ -64,8 +54,23 @@ module Api
       render json: { error: "Couldn't find User" }, status: :not_found
     end
 
+    def authorize_user_or_admin!
+      user = User.find(params[:id])
+      return if admin? || current_user == user
+
+      render json: { errors: { resource: ['is forbidden'] } },
+             status: :forbidden
+    end
+
+    def authorize_update_role
+      return unless params[:user]&.key?(:role) && !admin?
+
+      render json: { errors: { message: 'Only administrators can update the role attribute' } },
+             status: :forbidden
+    end
+
     def user_params
-      if current_user&.admin?
+      if admin?
         params.require(:user).permit(:first_name, :last_name, :email, :password,
                                      :password_confirmation, :role)
       else

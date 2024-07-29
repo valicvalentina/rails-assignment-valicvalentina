@@ -29,60 +29,26 @@ module Api
     private
 
     def authenticate_user!
-      token = request.headers['Authorization']
-      @current_user = User.find_by(token: token)
-
       return if @current_user
 
       render json: { errors: { token: ['is invalid'] } }, status: :unauthorized
     end
 
-    def authorize_admin!
+    def session_user
       token = request.headers['Authorization']
       @current_user = User.find_by(token: token)
+    end
+
+    def admin?
+      current_user&.admin?
+    end
+
+    def authorize_admin!
       return if current_user&.admin?
 
       render json: {
         errors: { resource: ['is forbidden'] }
       }, status: :forbidden
-    end
-
-    def authorize_user_users!
-      token = request.headers['Authorization']
-      @current_user = User.find_by(token: token)
-      user = User.find(params[:id])
-      return if current_user.admin? || current_user == user
-
-      render json: { errors: { resource: ['is forbidden'] } },
-             status: :forbidden
-    end
-
-    def authorize_update_role
-      token = request.headers['Authorization']
-      @current_user = User.find_by(token: token)
-      return unless params[:user]&.key?(:role) && !current_user.admin?
-
-      render json: { errors: { message: 'Only administrators can update the role attribute' } },
-             status: :forbidden
-    end
-
-    def authorize_update_user_id
-      token = request.headers['Authorization']
-      @current_user = User.find_by(token: token)
-      return unless params[:booking]&.key?(:user_id) && !current_user.admin?
-
-      render json: { errors: { message: 'Only administrators can update the role attribute' } },
-             status: :forbidden
-    end
-
-    def authorize_user_bookings!
-      token = request.headers['Authorization']
-      @current_user = User.find_by(token: token)
-      @booking = Booking.find(params[:id])
-      return if current_user.admin? || current_user == @booking.user
-
-      render json: { errors: { resource: ['is forbidden'] } },
-             status: :forbidden
     end
   end
 end

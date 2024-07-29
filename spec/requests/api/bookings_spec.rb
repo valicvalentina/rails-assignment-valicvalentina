@@ -8,7 +8,7 @@ RSpec.describe 'Bookings API', type: :request do
   let!(:flight) { create(:flight, company: company) }
   let!(:admin)  { create(:user, role: 'admin') }
 
-  describe 'GET /api/bookings' do
+  describe 'GET /api/bookings' do # u modele dodati spec koji gleda da je id = id od usera
     context 'when the user is an admin' do
       it 'returns all bookings' do
         create_list(:booking, 3, flight: flight, user: admin)

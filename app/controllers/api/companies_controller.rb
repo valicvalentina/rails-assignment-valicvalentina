@@ -2,6 +2,7 @@ module Api
   class CompaniesController < Api::BaseController
     before_action :set_company, only: [:show, :update, :destroy]
     before_action :set_serializer
+    before_action :session_user
     before_action :authenticate_user!, except: [:index, :show]
     before_action :authorize_admin!, except: [:index, :show]
 
@@ -46,7 +47,7 @@ module Api
     private
 
     def set_company
-      @company = Company.find(params[:id])
+      @company = Company.find(params[:id]) # companies.pemit name.id
     rescue ActiveRecord::RecordNotFound
       render json: { error: "Couldn't find Company" }, status: :not_found
     end

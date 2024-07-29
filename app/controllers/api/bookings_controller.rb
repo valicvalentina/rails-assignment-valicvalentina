@@ -2,12 +2,13 @@ module Api
   class BookingsController < Api::BaseController
     before_action :set_booking, only: [:show, :update, :destroy]
     before_action :set_serializer
+    before_action :session_user
     before_action :authenticate_user!
     before_action :authorize_user_bookings!, only: [:update, :destroy]
     before_action :authorize_update_user_id, only: [:update]
 
     def index
-      bookings = current_user&.admin? ? Booking.all : current_user.bookings
+      bookings = admin? ? Booking.all : current_user.bookings
 
       if request.headers['X-API-SERIALIZER-ROOT'] == '0'
         render json: serialize(bookings, :extended)
@@ -17,7 +18,7 @@ module Api
     end
 
     def show
-      booking = current_user.admin? ? Booking.find(params[:id]) : find_booking
+      booking = admin? ? Booking.find(params[:id]) : find_booking
       if booking
         render json: { booking: serialize(booking, :extended) }
       else
@@ -70,17 +71,32 @@ module Api
     end
 
     def booking_params
-      if current_user.admin?
+      if admin?
         params.require(:booking).permit(:flight_id, :no_of_seats, :seat_price, :user_id)
       else
         params.require(:booking).permit(:flight_id, :no_of_seats, :seat_price)
       end
     end
 
+    def authorize_update_user_id
+      return unless params[:booking]&.key?(:user_id) && !current_user.admin?
+
+      render json: { errors: { message: 'Only administrators can update the role attribute' } },
+             status: :forbidden
+    end
+
+    def authorize_user_bookings!
+      @booking = Booking.find(params[:id])
+      return if admin? || current_user == @booking.user
+
+      render json: { errors: { resource: ['is forbidden'] } },
+             status: :forbidden
+    end
+
     def build_booking
-      if current_user.admin? && booking_params[:user_id]
+      if admin? && booking_params[:user_id]
         user = User.find(booking_params[:user_id])
-        user.bookings.build(booking_params.except(:user_id))
+        user.bookings.build(booking_params)
       else
         current_user.bookings.build(booking_params)
       end
