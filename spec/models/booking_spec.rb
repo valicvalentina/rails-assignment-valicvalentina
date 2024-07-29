@@ -2,6 +2,10 @@ RSpec.describe Booking, type: :model do
   let(:company) { create(:company) }
   let(:flight) { create(:flight, company: company) }
   let(:user) { create(:user) }
+  let!(:user_bookings) { create_list(:booking, 3, flight: flight, user: user) }
+  let!(:admin_bookings) do
+    create_list(:booking, 3, flight: flight, user: create(:user, role: 'admin'))
+  end
 
   it 'is valid with all attributes' do
     booking = create(:booking, flight: flight, user: user, no_of_seats: 1, seat_price: 100.00)
@@ -45,5 +49,17 @@ RSpec.describe Booking, type: :model do
     booking = build(:booking, flight: flight, user: user, no_of_seats: 1, seat_price: 100.00)
     booking.valid?
     expect(booking).to be_valid
+  end
+
+  context 'when booking fetching' do
+    it 'returns only the user\'s bookings if the user is not an admin' do
+      expect(user.bookings.size).to eq(3)
+      expect(user.bookings.pluck(:id)).to match_array(user_bookings.pluck(:id))
+    end
+
+    it 'returns all bookings if the user is an admin' do
+      expect(admin_bookings.size).to eq(3)
+      expect(described_class.all.size).to eq(6)
+    end
   end
 end
