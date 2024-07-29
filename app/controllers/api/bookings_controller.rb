@@ -96,7 +96,7 @@ module Api
 
     def build_booking
       if admin? && booking_params[:user_id]
-        user = User.find!(booking_params[:user_id])
+        user = User.find_by!(id: booking_params[:user_id])
         user.bookings.build(booking_params)
       else
         current_user.bookings.build(booking_params)
