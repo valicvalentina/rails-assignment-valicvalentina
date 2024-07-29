@@ -1,6 +1,7 @@
 module Api
   class SessionsController < Api::BaseController
     before_action :set_serializer
+    before_action :session_user
     before_action :authenticate_user!, only: [:destroy]
     skip_before_action :authenticate_user!, only: [:create]
 
