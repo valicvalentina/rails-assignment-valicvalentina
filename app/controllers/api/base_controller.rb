@@ -20,7 +20,7 @@ module Api
 
     def serializer_name
       if controller_name == 'sessions'
-        'UserSerializer'.constantize
+        UserSerializer
       else
         "#{controller_name.capitalize.singularize}Serializer".constantize
       end
