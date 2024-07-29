@@ -16,8 +16,7 @@ module Api
     end
 
     def show
-      flight = Flight.find(params[:id])
-      render json: { flight: serialize(flight, :extended) }
+      render json: { flight: serialize(@flight, :extended) }
     end
 
     def create
@@ -30,17 +29,15 @@ module Api
     end
 
     def update
-      flight = Flight.find(params[:id])
-      if flight.update(flight_params)
-        render json: { flight: serialize(flight, :extended) }, status: :ok
+      if @flight.update(flight_params)
+        render json: { flight: serialize(@flight, :extended) }, status: :ok
       else
-        render json: { errors: flight.errors }, status: :bad_request
+        render json: { errors: @flight.errors }, status: :bad_request
       end
     end
 
     def destroy
-      flight = Flight.find(params[:id])
-      flight.destroy
+      @flight.destroy
       head :no_content
     end
 

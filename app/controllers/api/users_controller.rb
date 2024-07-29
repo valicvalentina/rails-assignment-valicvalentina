@@ -18,8 +18,7 @@ module Api
     end
 
     def show
-      user = User.find(params[:id])
-      render json: { user: serialize(user, :extended) }
+      render json: { user: serialize(@user, :extended) }
     end
 
     def create
@@ -32,17 +31,15 @@ module Api
     end
 
     def update
-      user = User.find(params[:id])
-      if user.update(user_params)
-        render json: { user: serialize(user, :extended) }, status: :ok
+      if @user.update(user_params)
+        render json: { user: serialize(@user, :extended) }, status: :ok
       else
-        render json: { errors: user.errors }, status: :bad_request
+        render json: { errors: @user.errors }, status: :bad_request
       end
     end
 
     def destroy
-      user = User.find(params[:id])
-      user.destroy
+      @user.destroy
       head :no_content
     end
 
@@ -55,8 +52,7 @@ module Api
     end
 
     def authorize_user_or_admin!
-      user = User.find(params[:id])
-      return if admin? || current_user == user
+      return if admin? || current_user == @user
 
       render json: { errors: { resource: ['is forbidden'] } },
              status: :forbidden

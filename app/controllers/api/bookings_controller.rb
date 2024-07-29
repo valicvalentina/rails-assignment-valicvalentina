@@ -18,7 +18,7 @@ module Api
     end
 
     def show
-      booking = admin? ? Booking.find(params[:id]) : find_booking
+      booking = admin? ? @booking : find_booking
       if booking
         render json: { booking: serialize(booking, :extended) }
       else
@@ -62,6 +62,8 @@ module Api
 
     def find_booking
       current_user.bookings.find_by(id: params[:id])
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "Couldn't find Booking" }, status: :not_found
     end
 
     def set_booking
@@ -79,14 +81,13 @@ module Api
     end
 
     def authorize_update_user_id
-      return unless params[:booking]&.key?(:user_id) && !current_user.admin?
+      return unless params[:booking]&.key?(:user_id) && !admin?
 
       render json: { errors: { message: 'Only administrators can update the role attribute' } },
              status: :forbidden
     end
 
     def authorize_user_bookings!
-      @booking = Booking.find(params[:id])
       return if admin? || current_user == @booking.user
 
       render json: { errors: { resource: ['is forbidden'] } },
@@ -95,7 +96,7 @@ module Api
 
     def build_booking
       if admin? && booking_params[:user_id]
-        user = User.find(booking_params[:user_id])
+        user = User.find!(booking_params[:user_id])
         user.bookings.build(booking_params)
       else
         current_user.bookings.build(booking_params)
