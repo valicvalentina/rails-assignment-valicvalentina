@@ -8,7 +8,7 @@ RSpec.describe 'Bookings API', type: :request do
   let!(:flight) { create(:flight, company: company) }
   let!(:admin)  { create(:user, role: 'admin') }
 
-  describe 'GET /api/bookings' do # u modele dodati spec koji gleda da je id = id od usera
+  describe 'GET /api/bookings' do
     context 'when the user is an admin' do
       it 'returns all bookings' do
         create_list(:booking, 3, flight: flight, user: admin)
@@ -74,6 +74,12 @@ RSpec.describe 'Bookings API', type: :request do
         expect(json_body).to eq({ 'errors' => { 'token' => ['is invalid'] } })
       end
     end
+
+    it 'returns status 404 if the booking does not exist' do
+      get '/api/bookings/999999', headers: valid_headers(admin)
+      expect(response).to have_http_status(:not_found)
+      expect(json_body).to include('error' => "Couldn't find Booking")
+    end
   end
 
   describe 'POST /api/bookings' do
@@ -109,6 +115,18 @@ RSpec.describe 'Bookings API', type: :request do
         post '/api/bookings', params: valid_attributes
         expect(response).to have_http_status(:unauthorized)
         expect(json_body).to eq({ 'errors' => { 'token' => ['is invalid'] } })
+      end
+    end
+
+    context 'when user_id is invalid' do
+      let(:invalid_user_attributes) do
+        { booking: { no_of_seats: 2, seat_price: 150, flight_id: flight.id, user_id: 0 } }
+      end
+
+      it 'returns 404 not found' do
+        post '/api/bookings', params: invalid_user_attributes, headers: valid_headers(admin)
+        expect(response).to have_http_status(:not_found)
+        expect(json_body).to eq({ 'error' => "Couldn't find User" })
       end
     end
   end

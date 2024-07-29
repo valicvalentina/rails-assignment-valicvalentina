@@ -30,6 +30,8 @@ module Api
 
     def create
       booking = build_booking
+      return if performed?
+
       if booking.save
         render json: { booking: serialize(booking, :extended) }, status: :created
       else
@@ -95,9 +97,13 @@ module Api
     end
 
     def build_booking
-      if admin? && booking_params[:user_id]
-        user = User.find_by!(id: booking_params[:user_id])
-        user.bookings.build(booking_params)
+      if current_user.admin? && booking_params[:user_id]
+        user = User.find_by(id: booking_params[:user_id])
+        if user
+          user.bookings.build(booking_params.except(:user_id))
+        else
+          render json: { error: "Couldn't find User" }, status: :not_found
+        end
       else
         current_user.bookings.build(booking_params)
       end
