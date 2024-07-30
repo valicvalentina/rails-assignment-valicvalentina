@@ -40,6 +40,15 @@ class Flight < ApplicationRecord
 
     return unless overlapping_flights.exists?
 
-    errors.add(:flight, 'This flight overlaps with an existing flight for the same company.')
+    add_errors(overlapping_flights)
+  end
+
+  def add_errors(overlapping_flights)
+    errors.add(:departs_at, 'overlaps with another flight') if overlapping_flights.where(
+      'departs_at < ?', departs_at
+    ).exists?
+    errors.add(:arrives_at, 'overlaps with another flight') if overlapping_flights.where(
+      'arrives_at > ?', arrives_at
+    ).exists?
   end
 end
