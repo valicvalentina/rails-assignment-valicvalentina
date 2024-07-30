@@ -44,7 +44,7 @@ module Api
     end
 
     def authorize_admin!
-      return if current_user&.admin?
+      return if admin?
 
       render json: {
         errors: { resource: ['is forbidden'] }
