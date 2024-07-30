@@ -12,6 +12,14 @@ class User < ApplicationRecord
   validates :role, inclusion: { in: ['admin', nil], message: '%<value>s is not a valid role' },
                    allow_nil: true
 
+  scope :sorted_by_email, -> { order('email ASC') }
+  scope :filter_by_query, lambda { |query|
+    where(
+      'LOWER(email) LIKE :query OR LOWER(first_name) LIKE :query OR LOWER(last_name) LIKE :query',
+      query: "%#{query.downcase}%"
+    )
+  }
+
   def admin?
     role == 'admin'
   end

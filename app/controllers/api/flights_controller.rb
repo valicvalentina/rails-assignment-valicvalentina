@@ -7,7 +7,8 @@ module Api
     before_action :authorize_admin!, except: [:index, :show]
 
     def index
-      flights = Flight.all
+      flights = Flight.includes(:company, :bookings).active.sorted
+      flights = filter_flights_by_params(flights)
       if request.headers['X-API-SERIALIZER-ROOT'] == '0'
         render json: serialize(flights, :extended)
       else
@@ -52,6 +53,27 @@ module Api
     def flight_params
       params.require(:flight).permit(:name, :no_of_seats, :base_price, :departs_at, :arrives_at,
                                      :company_id)
+    end
+
+    def filter_flights_by_params(flights)
+      flights = filter_by_name(flights) if params[:name_cont].present?
+      flights = filter_by_departure_time(flights) if params[:departs_at_eq].present?
+      if params[:no_of_available_seats_gteq].present?
+        flights = filter_by_min_available_seats(flights)
+      end
+      flights
+    end
+
+    def filter_by_name(flights)
+      flights.by_name(params[:name_cont])
+    end
+
+    def filter_by_departure_time(flights)
+      flights.by_departure_time(params[:departs_at_eq])
+    end
+
+    def filter_by_min_available_seats(flights)
+      flights.by_min_available_seats(params[:no_of_available_seats_gteq])
     end
   end
 end

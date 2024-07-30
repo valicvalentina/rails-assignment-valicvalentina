@@ -5,7 +5,13 @@ RSpec.describe 'Flights API', type: :request do
   include TestHelpers::Headers
 
   let!(:company) { create(:company) }
-  let!(:flights) { create_list(:flight, 3, company: company) }
+  let!(:flights) do
+    [
+      create(:flight, company: company, departs_at: 1.day.from_now, arrives_at: 2.days.from_now),
+      create(:flight, company: company, departs_at: 3.days.from_now, arrives_at: 4.days.from_now),
+      create(:flight, company: company, departs_at: 5.days.from_now, arrives_at: 6.days.from_now)
+    ]
+  end
   let(:admin) { create(:user, role: 'admin') }
   let(:user) { create(:user, role: nil) }
 
@@ -62,8 +68,8 @@ RSpec.describe 'Flights API', type: :request do
 
   describe 'POST /api/flights' do
     let(:valid_attributes) do
-      { flight: { name: 'Zagreb-Bratislava', no_of_seats: 330, departs_at: 1.day.from_now,
-                  arrives_at: 2.days.from_now, base_price: 200, company_id: company.id } }
+      { flight: { name: 'Zagreb-Bratislava', no_of_seats: 330, departs_at: 8.days.from_now,
+                  arrives_at: 9.days.from_now, base_price: 200, company_id: company.id } }
     end
 
     context 'when admin with valid attributes' do

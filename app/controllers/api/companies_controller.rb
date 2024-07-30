@@ -7,7 +7,8 @@ module Api
     before_action :authorize_admin!, except: [:index, :show]
 
     def index
-      companies = Company.all
+      companies = Company.includes(:flights).order(name: :asc)
+      companies = companies.with_active_flights if params[:filter] == 'active'
       if request.headers['X-API-SERIALIZER-ROOT'] == '0'
         render json: serialize(companies, :extended)
       else
