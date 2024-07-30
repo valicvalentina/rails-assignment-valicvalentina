@@ -16,7 +16,7 @@ class FlightSerializer < Blueprinter::Base
   end
 
   field :current_price do |flight, _options|
-    days_until_departure = (flight.departs_at.to_date - Time.zone.today).to_i
+    days_until_departure = [(flight.departs_at.to_date - Time.zone.today).to_i, 0].max
 
     current_price = if days_until_departure >= 15
                       flight.base_price

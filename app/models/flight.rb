@@ -44,11 +44,12 @@ class Flight < ApplicationRecord
   end
 
   def add_errors(overlapping_flights)
-    errors.add(:departs_at, 'overlaps with another flight') if overlapping_flights.where(
-      'departs_at < ?', departs_at
-    ).exists?
-    errors.add(:arrives_at, 'overlaps with another flight') if overlapping_flights.where(
-      'arrives_at > ?', arrives_at
-    ).exists?
+    if overlapping_flights.where('departs_at < ?', arrives_at).exists?
+      errors.add(:departs_at, 'overlaps with another flight')
+    end
+
+    return unless overlapping_flights.where('arrives_at > ?', departs_at).exists?
+
+    errors.add(:arrives_at, 'overlaps with another flight')
   end
 end
