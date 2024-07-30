@@ -2,9 +2,12 @@ require 'rails_helper'
 
 RSpec.describe 'Flights API', type: :request do
   include TestHelpers::JsonResponse
+  include TestHelpers::Headers
 
   let!(:company) { create(:company) }
   let!(:flights) { create_list(:flight, 3, company: company) }
+  let(:admin) { create(:user, role: 'admin') }
+  let(:user) { create(:user, role: nil) }
 
   describe 'GET /api/flights' do
     context 'when X-API-SERIALIZER-ROOT is 1' do
@@ -32,8 +35,7 @@ RSpec.describe 'Flights API', type: :request do
 
         expect(json_body['flight']['data']).to include(
           'attributes' => a_hash_including(
-            'name', 'departs_at', 'arrives_at', 'base_price',
-            'no_of_seats'
+            'name', 'departs_at', 'arrives_at', 'base_price', 'no_of_seats'
           )
         )
       end
@@ -45,11 +47,7 @@ RSpec.describe 'Flights API', type: :request do
         expect(response).to have_http_status(:ok)
 
         expect(json_body['flight']).to include(
-          'name',
-          'departs_at',
-          'arrives_at',
-          'base_price',
-          'no_of_seats'
+          'name', 'departs_at', 'arrives_at', 'base_price', 'no_of_seats'
         )
       end
     end
@@ -68,10 +66,10 @@ RSpec.describe 'Flights API', type: :request do
                   arrives_at: 2.days.from_now, base_price: 200, company_id: company.id } }
     end
 
-    context 'when the request is valid' do
+    context 'when admin with valid attributes' do
       it 'creates a new flight' do
         expect do
-          post '/api/flights', params: valid_attributes
+          post '/api/flights', params: valid_attributes, headers: valid_headers(admin)
         end.to change(Flight, :count).by(1)
 
         expect(response).to have_http_status(:created)
@@ -83,15 +81,29 @@ RSpec.describe 'Flights API', type: :request do
       end
     end
 
-    context 'when the request is invalid' do
-      before { post '/api/flights', params: { flight: { name: '' } } }
-
+    context 'when admin with invalid attributes' do
       it 'returns status code 400' do
+        post '/api/flights', params: { flight: { name: '' } }, headers: valid_headers(admin)
         expect(response).to have_http_status(:bad_request)
       end
 
       it 'returns a validation failure message' do
+        post '/api/flights', params: { flight: { name: '' } }, headers: valid_headers(admin)
         expect(json_body['errors']['name']).to include("can't be blank")
+      end
+    end
+
+    context 'when non-admin user with valid attributes' do
+      it 'returns status 403 forbidden' do
+        post '/api/flights', params: valid_attributes, headers: valid_headers(user)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context 'when non-admin user with invalid attributes' do
+      it 'returns status 403 forbidden' do
+        post '/api/flights', params: { flight: { name: '' } }, headers: valid_headers(user)
+        expect(response).to have_http_status(:forbidden)
       end
     end
   end
@@ -99,46 +111,70 @@ RSpec.describe 'Flights API', type: :request do
   describe 'PUT /api/flights/:id' do
     let(:valid_attributes) { { flight: { name: 'Updated Flight' } } }
 
-    context 'when the request is valid' do
+    context 'when admin with valid attributes' do
       it 'updates the flight' do
-        put "/api/flights/#{flights.first.id}", params: valid_attributes
+        put "/api/flights/#{flights.first.id}", params: valid_attributes,
+                                                headers: valid_headers(admin)
         expect(response).to have_http_status(:ok)
         expect(json_body['flight']).to include('name' => 'Updated Flight')
       end
     end
 
-    context 'when the request is invalid' do
-      before { put "/api/flights/#{flights.first.id}", params: { flight: { name: '' } } }
-
+    context 'when admin with invalid attributes' do
       it 'returns status code 400' do
+        put "/api/flights/#{flights.first.id}", params: { flight: { name: '' } },
+                                                headers: valid_headers(admin)
         expect(response).to have_http_status(:bad_request)
       end
 
       it 'returns a validation failure message' do
+        put "/api/flights/#{flights.first.id}", params: { flight: { name: '' } },
+                                                headers: valid_headers(admin)
         expect(json_body['errors']['name']).to include("can't be blank")
+      end
+    end
+
+    context 'when non-admin user with valid attributes' do
+      it 'returns status 403 forbidden' do
+        put "/api/flights/#{flights.first.id}", params: valid_attributes,
+                                                headers: valid_headers(user)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context 'when non-admin user with invalid attributes' do
+      it 'returns status 403 forbidden' do
+        put "/api/flights/#{flights.first.id}", params: { flight: { name: '' } },
+                                                headers: valid_headers(user)
+        expect(response).to have_http_status(:forbidden)
       end
     end
   end
 
   describe 'DELETE /api/flights/:id' do
-    context 'when the request is valid' do
+    context 'when admin and the flight exists' do
       it 'deletes the flight' do
         expect do
-          delete "/api/flights/#{flights.first.id}"
+          delete "/api/flights/#{flights.first.id}", headers: valid_headers(admin)
         end.to change(Flight, :count).by(-1)
 
         expect(response).to have_http_status(:no_content)
       end
     end
 
-    context 'when the request is invalid' do
+    context 'when admin and the flight does not exist' do
       it 'returns a not found error' do
         non_existent_flight_id = 99_999
-
-        delete "/api/flights/#{non_existent_flight_id}"
-
+        delete "/api/flights/#{non_existent_flight_id}", headers: valid_headers(admin)
         expect(response).to have_http_status(:not_found)
         expect(json_body['error']).to eq("Couldn't find Flight")
+      end
+    end
+
+    context 'when non-admin user' do
+      it 'returns status 403 forbidden' do
+        delete "/api/flights/#{flights.first.id}", headers: valid_headers(user)
+        expect(response).to have_http_status(:forbidden)
       end
     end
   end

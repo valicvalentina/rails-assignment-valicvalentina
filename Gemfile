@@ -46,6 +46,12 @@ gem 'blueprinter'
 
 gem 'fast_jsonapi', '1.4.0'
 
+gem 'bcrypt', '~> 3.1.7'
+
+gem 'jwt'
+
+gem 'database_cleaner-active_record'
+
 group :development do
   # Access an interactive console on exception pages or by calling 'console' anywhere in the code.
   gem 'listen', '~> 3.3'

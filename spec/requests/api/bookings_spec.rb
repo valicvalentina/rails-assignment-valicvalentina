@@ -2,60 +2,81 @@ require 'rails_helper'
 
 RSpec.describe 'Bookings API', type: :request do
   include TestHelpers::JsonResponse
+  include TestHelpers::Headers
 
   let!(:company) { create(:company) }
   let!(:flight) { create(:flight, company: company) }
-  let!(:user) { create(:user) }
-  let!(:bookings) { create_list(:booking, 3, flight: flight, user: user) }
+  let!(:admin)  { create(:user, role: 'admin') }
 
   describe 'GET /api/bookings' do
-    context 'when X-API-SERIALIZER-ROOT is 1' do
-      it 'successfully returns a list of bookings with root' do
-        get '/api/bookings', headers: { 'X-API-SERIALIZER-ROOT' => '1' }
+    context 'when the user is an admin' do
+      it 'returns all bookings' do
+        create_list(:booking, 3, flight: flight, user: admin)
+        create_list(:booking, 3, flight: flight, user: create(:user))
+        get '/api/bookings', headers: valid_headers(admin)
+        expect(response).to have_http_status(:ok)
+        expect(json_body['bookings'].size).to eq(6)
+      end
+    end
+
+    context 'when the user is not an admin' do
+      it 'returns only their bookings' do
+        user = create(:user)
+        create_list(:booking, 3, flight: flight, user: user)
+        create_list(:booking, 3, flight: flight, user: create(:user))
+        get '/api/bookings', headers: valid_headers(user)
         expect(response).to have_http_status(:ok)
         expect(json_body['bookings'].size).to eq(3)
       end
     end
 
-    context 'when X-API-SERIALIZER-ROOT is 0' do
-      it 'successfully returns a list of bookings without root' do
-        get '/api/bookings', headers: { 'X-API-SERIALIZER-ROOT' => '0' }
-        expect(response).to have_http_status(:ok)
-        expect(json_body.size).to eq(3)
+    context 'when unauthenticated' do
+      it 'returns 401 unauthorized' do
+        get '/api/bookings', headers: invalid_headers
+        expect(response).to have_http_status(:unauthorized)
+        expect(json_body).to eq({ 'errors' => { 'token' => ['is invalid'] } })
       end
     end
   end
 
   describe 'GET /api/bookings/:id' do
-    context 'when using FastJsonapi' do
-      it 'returns a single booking with FastJsonapi' do
-        get "/api/bookings/#{bookings.first.id}", headers: { 'X-API-SERIALIZER' => 'fast_jsonapi' }
+    context 'when the user is an admin' do
+      it 'returns the booking' do
+        booking = create(:booking, flight: flight, user: create(:user))
+        get "/api/bookings/#{booking.id}", headers: valid_headers(admin)
         expect(response).to have_http_status(:ok)
-
-        expect(json_body['booking']['data']).to include(
-          'attributes' => a_hash_including(
-            'no_of_seats',
-            'seat_price'
-          )
-        )
+        expect(json_body['booking']).to include('no_of_seats', 'seat_price')
       end
     end
 
-    context 'when using Blueprinter' do
-      it 'returns a single booking with Blueprinter' do
-        get "/api/bookings/#{bookings.first.id}", headers: { 'X-API-SERIALIZER' => 'blueprinter' }
+    context 'when the user is not an admin' do
+      it 'returns their booking' do
+        user = create(:user)
+        booking = create(:booking, flight: flight, user: user)
+        get "/api/bookings/#{booking.id}", headers: valid_headers(user)
         expect(response).to have_http_status(:ok)
+        expect(json_body['booking']).to include('no_of_seats', 'seat_price')
+      end
 
-        expect(json_body['booking']).to include(
-          'no_of_seats',
-          'seat_price'
-        )
+      it 'returns forbidden for another user\'s booking' do
+        user = create(:user)
+        other_booking = create(:booking, flight: flight, user: create(:user))
+        get "/api/bookings/#{other_booking.id}", headers: valid_headers(user)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context 'when unauthenticated' do
+      it 'returns 401 unauthorized' do
+        booking = create(:booking, flight: flight, user: create(:user))
+        get "/api/bookings/#{booking.id}", headers: invalid_headers
+        expect(response).to have_http_status(:unauthorized)
+        expect(json_body).to eq({ 'errors' => { 'token' => ['is invalid'] } })
       end
     end
 
     it 'returns status 404 if the booking does not exist' do
-      get '/api/bookings/999999'
-
+      get '/api/bookings/999999', headers: valid_headers(admin)
       expect(response).to have_http_status(:not_found)
       expect(json_body).to include('error' => "Couldn't find Booking")
     end
@@ -63,13 +84,15 @@ RSpec.describe 'Bookings API', type: :request do
 
   describe 'POST /api/bookings' do
     let(:valid_attributes) do
-      { booking: { no_of_seats: 2, seat_price: 150, flight_id: flight.id, user_id: user.id } }
+      { booking: { no_of_seats: 2, seat_price: 150, flight_id: flight.id } }
     end
 
     context 'when the request is valid' do
       it 'creates a new booking' do
+        user = create(:user)
         expect do
-          post '/api/bookings', params: valid_attributes
+          post '/api/bookings', params: valid_attributes.merge(user_id: user.id),
+                                headers: valid_headers(user)
         end.to change(Booking, :count).by(1)
 
         expect(response).to have_http_status(:created)
@@ -78,14 +101,32 @@ RSpec.describe 'Bookings API', type: :request do
     end
 
     context 'when the request is invalid' do
-      before { post '/api/bookings', params: { booking: { no_of_seats: nil } } }
-
       it 'returns status code 400' do
+        user = create(:user)
+        post '/api/bookings', params: { booking: { no_of_seats: nil } },
+                              headers: valid_headers(user)
         expect(response).to have_http_status(:bad_request)
+        expect(json_body['errors']['no_of_seats']).to include("can't be blank")
+      end
+    end
+
+    context 'when unauthenticated' do
+      it 'returns 401 unauthorized' do
+        post '/api/bookings', params: valid_attributes
+        expect(response).to have_http_status(:unauthorized)
+        expect(json_body).to eq({ 'errors' => { 'token' => ['is invalid'] } })
+      end
+    end
+
+    context 'when user_id is invalid' do
+      let(:invalid_user_attributes) do
+        { booking: { no_of_seats: 2, seat_price: 150, flight_id: flight.id, user_id: 0 } }
       end
 
-      it 'returns a validation failure message' do
-        expect(json_body['errors']['no_of_seats']).to include("can't be blank")
+      it 'returns 404 not found' do
+        post '/api/bookings', params: invalid_user_attributes, headers: valid_headers(admin)
+        expect(response).to have_http_status(:not_found)
+        expect(json_body).to eq({ 'error' => "Couldn't find User" })
       end
     end
   end
@@ -93,46 +134,101 @@ RSpec.describe 'Bookings API', type: :request do
   describe 'PUT /api/bookings/:id' do
     let(:valid_attributes) { { booking: { no_of_seats: 3 } } }
 
-    context 'when the request is valid' do
-      it 'updates the booking' do
-        put "/api/bookings/#{bookings.first.id}", params: valid_attributes
+    context 'when the user is an admin' do
+      it 'updates the booking including user_id' do
+        admin_booking = create(:booking, flight: flight, user: admin)
+        other_user = create(:user)
+        put "/api/bookings/#{admin_booking.id}",
+            params: { booking: { no_of_seats: 3, user_id: other_user.id } },
+            headers: valid_headers(admin)
         expect(response).to have_http_status(:ok)
         expect(json_body['booking']).to include('no_of_seats' => 3)
+        expect(json_body['booking']['user']['id']).to eq(other_user.id)
       end
     end
 
-    context 'when the request is invalid' do
-      before { put "/api/bookings/#{bookings.first.id}", params: { booking: { no_of_seats: nil } } }
-
-      it 'returns status code 400' do
-        expect(response).to have_http_status(:bad_request)
+    context 'when the user is not an admin' do
+      it 'updates their own booking' do
+        user = create(:user)
+        booking = create(:booking, flight: flight, user: user)
+        put "/api/bookings/#{booking.id}", params: valid_attributes, headers: valid_headers(user)
+        expect(response).to have_http_status(:ok)
+        expect(json_body['booking']).to include('no_of_seats' => 3)
       end
 
-      it 'returns a validation failure message' do
-        expect(json_body['errors']['no_of_seats']).to include("can't be blank")
+      it 'returns forbidden when trying to update user_id' do
+        user = create(:user)
+        booking = create(:booking, flight: flight, user: user)
+        put "/api/bookings/#{booking.id}",
+            params: { booking: { no_of_seats: 3, user_id: admin.id } }, headers: valid_headers(user)
+        expect(response).to have_http_status(:forbidden)
+      end
+
+      it 'returns forbidden when trying to update another user\'s booking' do
+        user = create(:user)
+        other_booking = create(:booking, flight: flight, user: create(:user))
+        put "/api/bookings/#{other_booking.id}", params: valid_attributes,
+                                                 headers: valid_headers(user)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context 'when unauthenticated' do
+      it 'returns 401 unauthorized' do
+        booking = create(:booking, flight: flight, user: create(:user))
+        put "/api/bookings/#{booking.id}", params: valid_attributes
+        expect(response).to have_http_status(:unauthorized)
+        expect(json_body).to eq({ 'errors' => { 'token' => ['is invalid'] } })
       end
     end
   end
 
   describe 'DELETE /api/bookings/:id' do
-    context 'when the request is valid' do
-      it 'deletes the booking' do
+    context 'when the user is an admin' do
+      it 'deletes the booking from admin' do
+        admin_booking = create(:booking, flight: flight, user: admin)
         expect do
-          delete "/api/bookings/#{bookings.first.id}"
+          delete "/api/bookings/#{admin_booking.id}", headers: valid_headers(admin)
         end.to change(Booking, :count).by(-1)
 
         expect(response).to have_http_status(:no_content)
       end
+
+      it 'deletes the booking from user' do
+        user = create(:user)
+        user_booking = create(:booking, flight: flight, user: user)
+        expect do
+          delete "/api/bookings/#{user_booking.id}", headers: valid_headers(admin)
+        end.to change(Booking, :count).by(-1)
+        expect(response).to have_http_status(:no_content)
+      end
     end
 
-    context 'when the request is invalid' do
-      it 'returns a not found error' do
-        non_existent_booking_id = 99_999
+    context 'when the user is not an admin' do
+      it 'deletes their own booking' do
+        user = create(:user)
+        booking = create(:booking, flight: flight, user: user)
+        expect do
+          delete "/api/bookings/#{booking.id}", headers: valid_headers(user)
+        end.to change(Booking, :count).by(-1)
 
-        delete "/api/bookings/#{non_existent_booking_id}"
+        expect(response).to have_http_status(:no_content)
+      end
 
-        expect(response).to have_http_status(:not_found)
-        expect(json_body['error']).to eq("Couldn't find Booking")
+      it 'returns forbidden when trying to delete another user\'s booking' do
+        user = create(:user)
+        other_booking = create(:booking, flight: flight, user: create(:user))
+        delete "/api/bookings/#{other_booking.id}", headers: valid_headers(user)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context 'when unauthenticated' do
+      it 'returns 401 unauthorized' do
+        booking = create(:booking, flight: flight, user: create(:user))
+        delete "/api/bookings/#{booking.id}", headers: invalid_headers
+        expect(response).to have_http_status(:unauthorized)
+        expect(json_body).to eq({ 'errors' => { 'token' => ['is invalid'] } })
       end
     end
   end

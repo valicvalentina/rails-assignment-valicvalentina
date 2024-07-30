@@ -2,6 +2,9 @@ module Api
   class FlightsController < Api::BaseController
     before_action :set_flight, only: [:show, :update, :destroy]
     before_action :set_serializer
+    before_action :session_user
+    before_action :authenticate_user!, except: [:index, :show]
+    before_action :authorize_admin!, except: [:index, :show]
 
     def index
       flights = Flight.all
@@ -13,8 +16,7 @@ module Api
     end
 
     def show
-      flight = Flight.find(params[:id])
-      render json: { flight: serialize(flight, :extended) }
+      render json: { flight: serialize(@flight, :extended) }
     end
 
     def create
@@ -27,17 +29,15 @@ module Api
     end
 
     def update
-      flight = Flight.find(params[:id])
-      if flight.update(flight_params)
-        render json: { flight: serialize(flight, :extended) }, status: :ok
+      if @flight.update(flight_params)
+        render json: { flight: serialize(@flight, :extended) }, status: :ok
       else
-        render json: { errors: flight.errors }, status: :bad_request
+        render json: { errors: @flight.errors }, status: :bad_request
       end
     end
 
     def destroy
-      flight = Flight.find(params[:id])
-      flight.destroy
+      @flight.destroy
       head :no_content
     end
 
