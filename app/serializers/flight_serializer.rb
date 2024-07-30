@@ -8,7 +8,7 @@ class FlightSerializer < Blueprinter::Base
   end
 
   field :no_of_booked_seats do |flight, _options|
-    flight.bookings.present? ? flight.bookings.sum(:no_of_seats) : 'No Bookings'
+    flight.bookings.present? ? flight.bookings.sum(:no_of_seats) : 0
   end
 
   field :company_name do |flight, _options|
