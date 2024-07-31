@@ -62,4 +62,17 @@ RSpec.describe Booking, type: :model do
       expect(described_class.all.size).to eq(6)
     end
   end
+
+  it 'validates no overbooking' do
+    flight_seats = create(:flight, no_of_seats: 10)
+    create(:booking, flight: flight_seats, no_of_seats: 5)
+    booking = build(:booking, flight: flight_seats, no_of_seats: 6)
+    expect(booking).not_to be_valid
+    expect(booking.errors[:no_of_seats]).to include('Flight is overbooked')
+  end
+
+  it 'calculates total price correctly' do
+    booking = create(:booking, no_of_seats: 3, seat_price: 200)
+    expect(booking.total_price).to eq(600.00)
+  end
 end

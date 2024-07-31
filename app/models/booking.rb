@@ -15,6 +15,9 @@ class Booking < ApplicationRecord
     joins(:flight)
       .order('flights.departs_at ASC, flights.name ASC, bookings.created_at ASC')
   }
+  def total_price
+    no_of_seats * seat_price
+  end
 
   private
 
@@ -27,8 +30,9 @@ class Booking < ApplicationRecord
   def not_overbooked
     return if flight.nil?
 
-    return unless flight.bookings.sum(:no_of_seats) + no_of_seats > flight.no_of_seats
+    booked_seats = flight.bookings.where.not(id: id).sum(:no_of_seats) + no_of_seats
+    return unless booked_seats > flight.no_of_seats
 
-    errors.add(:booking, 'Flight is overbooked')
+    errors.add(:no_of_seats, 'Flight is overbooked')
   end
 end

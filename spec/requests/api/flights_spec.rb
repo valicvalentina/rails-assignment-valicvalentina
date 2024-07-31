@@ -7,9 +7,12 @@ RSpec.describe 'Flights API', type: :request do
   let!(:company) { create(:company) }
   let!(:flights) do
     [
-      create(:flight, company: company, departs_at: 1.day.from_now, arrives_at: 2.days.from_now),
-      create(:flight, company: company, departs_at: 3.days.from_now, arrives_at: 4.days.from_now),
-      create(:flight, company: company, departs_at: 5.days.from_now, arrives_at: 6.days.from_now)
+      create(:flight, company: company, name: 'New York-London', departs_at: 1.day.from_now,
+                      arrives_at: 2.days.from_now),
+      create(:flight, company: company, name: 'Paris-Berlin', departs_at: 3.days.from_now,
+                      arrives_at: 4.days.from_now),
+      create(:flight, company: company, name: 'Tokyo-Osaka', departs_at: 5.days.from_now,
+                      arrives_at: 6.days.from_now)
     ]
   end
   let(:admin) { create(:user, role: 'admin') }
@@ -29,6 +32,74 @@ RSpec.describe 'Flights API', type: :request do
         get '/api/flights', headers: { 'X-API-SERIALIZER-ROOT' => '0' }
         expect(response).to have_http_status(:ok)
         expect(json_body.size).to eq(3)
+      end
+    end
+
+    context 'when sorting flights' do
+      it 'returns flights sorted by departs_at, name, and created_at in ascending order' do
+        flight1 = flights[0]
+        flight2 = flights[1]
+        flight3 = flights[2]
+
+        get '/api/flights'
+        expect(response).to have_http_status(:ok)
+
+        sorted_flights = json_body['flights']
+        flight_ids = sorted_flights.pluck('id')
+        expected_ids = [flight1.id, flight2.id, flight3.id]
+        expect(flight_ids).to eq(expected_ids)
+      end
+    end
+
+    context 'when filtering by active flights' do
+      it 'returns only active flights' do
+        create(:flight, company: company, name: 'Zagreb-Bratislava', departs_at: 7.days.ago,
+                        arrives_at: 6.days.ago)
+
+        get '/api/flights'
+        expect(response).to have_http_status(:ok)
+
+        response_flights = json_body['flights']
+        response_flight_ids = response_flights.map { |flight| flight['id'] }
+        expected_flight_ids = flights.map(&:id)
+        expect(response_flight_ids).to match_array(expected_flight_ids)
+      end
+    end
+
+    context 'when filtering by name' do
+      it 'returns flights containing the name in a case-insensitive manner' do
+        get '/api/flights', params: { name_cont: 'New York' }
+        expect(response).to have_http_status(:ok)
+
+        response_flights = json_body['flights']
+        response_flight_ids = response_flights.map { |flight| flight['id'] }
+        expected_flight_ids = [flights.find { |f| f.name.include?('New York') }.id]
+        expect(response_flight_ids).to match_array(expected_flight_ids)
+      end
+    end
+
+    context 'when filtering by departure time' do
+      it 'returns flights departing at the exact time' do
+        target_time = flights.first.departs_at.strftime('%Y-%m-%dT%H:%M')
+        get '/api/flights', params: { departs_at_eq: target_time }
+        expect(response).to have_http_status(:ok)
+
+        response_flights = json_body['flights']
+        response_flight_ids = response_flights.map { |flight| flight['id'] }
+        expected_flight_ids = [flights.first.id]
+        expect(response_flight_ids).to match_array(expected_flight_ids)
+      end
+    end
+
+    context 'when filtering by number of available seats' do
+      it 'returns flights with the number of available seats greater than or equal to value' do
+        get '/api/flights', params: { no_of_available_seats_gteq: 20 }
+        expect(response).to have_http_status(:ok)
+
+        response_flights = json_body['flights']
+        response_flight_ids = response_flights.map { |flight| flight['id'] }
+        expected_flight_ids = flights.select { |f| f.no_of_seats >= 20 }.map(&:id)
+        expect(response_flight_ids).to match_array(expected_flight_ids)
       end
     end
   end

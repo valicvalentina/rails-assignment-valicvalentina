@@ -19,6 +19,73 @@ RSpec.describe 'Bookings API', type: :request do
       end
     end
 
+    context 'when sorting by departs_at, flight name, and created_at' do
+      it 'sort by departs_at ASC when different departs_at' do
+        flight_munich_paris = create(:flight, name: 'Munich-Paris', departs_at: 1.day.from_now)
+        flight_london_berlin = create(:flight, name: 'London-Berlin', departs_at: 2.days.from_now,
+                                               arrives_at: 5.days.from_now)
+
+        booking_alpha = create(:booking, flight: flight_munich_paris, created_at: 3.days.ago)
+        booking_beta = create(:booking, flight: flight_london_berlin, created_at: 3.days.ago)
+
+        get '/api/bookings', headers: valid_headers(admin)
+        expect(response).to have_http_status(:ok)
+        expect(json_body['bookings'].pluck('id')).to eq([booking_alpha.id, booking_beta.id])
+      end
+
+      it 'sort by flight_name ASC when same departs_at' do
+        Flight.delete_all
+        flight_a = create(:flight, name: 'A', departs_at: 1.day.from_now)
+        flight_b = create(:flight, name: 'B', departs_at: 1.day.from_now)
+
+        booking_alpha = create(:booking, flight: flight_a, created_at: 3.days.ago)
+        booking_beta = create(:booking, flight: flight_b, created_at: 2.days.ago)
+
+        get '/api/bookings', headers: valid_headers(admin)
+        expect(response).to have_http_status(:ok)
+        expect(json_body['bookings'].pluck('id')).to eq([booking_alpha.id, booking_beta.id])
+      end
+
+      it 'sort by created_at ASC when same departs_at and flight_name' do
+        Flight.delete_all
+        flight_munich_paris = create(:flight, name: 'Munich-Paris', departs_at: 1.day.from_now)
+
+        booking_alpha = create(:booking, flight: flight_munich_paris, created_at: 3.days.ago)
+        booking_beta = create(:booking, flight: flight_munich_paris, created_at: 15.days.ago)
+
+        get '/api/bookings', headers: valid_headers(admin)
+        expect(response).to have_http_status(:ok)
+        expect(json_body['bookings'].pluck('id')).to eq([booking_beta.id, booking_alpha.id])
+      end
+    end
+
+    context 'when filter is active' do
+      around do |example|
+        Booking.class_eval do
+          def flight_not_in_past; end
+        end
+
+        example.run
+        Booking.class_eval do
+          def flight_not_in_past; end
+        end
+      end
+
+      it 'returns only bookings with active flights' do
+        active_flight = create(:flight, name: 'Active-Flight', departs_at: 2.days.from_now)
+        inactive_flight = create(:flight, name: 'New-York-London', departs_at: 3.days.ago)
+        booking_active = create(:booking, flight: active_flight, created_at: 1.day.ago)
+        create(:booking, flight: inactive_flight, created_at: 2.days.ago)
+
+        get '/api/bookings?filter=active', headers: valid_headers(admin)
+        expect(response).to have_http_status(:ok)
+        bookings = json_body['bookings']
+        booking_ids = bookings.pluck('id')
+        expect(bookings.size).to eq(1)
+        expect(booking_ids).to contain_exactly(booking_active.id)
+      end
+    end
+
     context 'when the user is not an admin' do
       it 'returns only their bookings' do
         user = create(:user)
