@@ -3,8 +3,9 @@ require 'rails_helper'
 RSpec.describe 'Flights API', type: :request do
   include TestHelpers::JsonResponse
   include TestHelpers::Headers
+  include TestHelpers::FlightHelpers
 
-  let!(:company) { create(:company) }
+  let!(:company) { create(:company, name: 'Turkish Airlines') }
   let!(:flights) do
     [
       create(:flight, company: company, name: 'New York-London', departs_at: 1.day.from_now,
@@ -100,6 +101,89 @@ RSpec.describe 'Flights API', type: :request do
         response_flight_ids = response_flights.map { |flight| flight['id'] }
         expected_flight_ids = flights.select { |f| f.no_of_seats >= 20 }.map(&:id)
         expect(response_flight_ids).to match_array(expected_flight_ids)
+      end
+    end
+
+    context 'when serializing flight details' do
+      it 'includes number of booked seats for each flight' do
+        create(:booking, flight: flights[0], no_of_seats: 5)
+        create(:booking, flight: flights[0], no_of_seats: 3)
+        get '/api/flights'
+        expect(response).to have_http_status(:ok)
+
+        response_flights = json_body['flights']
+        flight_ny = response_flights.find { |f| f['name'] == 'New York-London' }
+        expect(flight_ny['no_of_booked_seats']).to eq(8)
+      end
+
+      it 'includes company name for each flight' do
+        get '/api/flights'
+        expect(response).to have_http_status(:ok)
+
+        response_flights = json_body['flights']
+        flight_ny = response_flights.find { |f| f['name'] == 'New York-London' }
+        expect(flight_ny['company_name']).to eq('Turkish Airlines')
+      end
+    end
+
+    context 'when calculating current price' do
+      it 'returns correct current price 15 days before departure' do
+        flight_ny = create(:flight, name: 'NY-Zg', departs_at: 15.days.from_now,
+                                    arrives_at: 16.days.from_now)
+        get '/api/flights'
+        expect(response).to have_http_status(:ok)
+
+        flight_response = json_body['flights'].find { |f| f['name'] == flight_ny.name }
+        expected_price = flight_ny.base_price
+        expect(flight_response['current_price']).to eq(expected_price)
+      end
+
+      it 'returns correct current price 10 days before departure' do
+        flight_ny = create(:flight, name: 'NY-Zg', departs_at: 10.days.from_now,
+                                    arrives_at: 13.days.from_now)
+        get '/api/flights'
+        expect(response).to have_http_status(:ok)
+
+        flight_response = json_body['flights'].find { |f| f['name'] == flight_ny.name }
+        expected_price = calculate_expected_price(flight_ny)
+        expect(flight_response['current_price']).to eq(expected_price)
+      end
+
+      it 'returns correct current price 3 days before departure' do
+        flight_ny = create(:flight, name: 'NY-Zg', departs_at: 3.days.from_now,
+                                    arrives_at: 6.days.from_now)
+
+        get '/api/flights'
+        expect(response).to have_http_status(:ok)
+
+        flight_response = json_body['flights'].find { |f| f['name'] == flight_ny.name }
+        expected_price = calculate_expected_price(flight_ny)
+        expect(flight_response['current_price']).to eq(expected_price)
+      end
+
+      it 'returns correct current price on the day of departure' do
+        flight_ny = create(:flight, name: 'New York-London', departs_at: 1.minute.from_now,
+                                    arrives_at: 2.days.from_now)
+        get '/api/flights'
+        expect(response).to have_http_status(:ok)
+        flight_response = json_body['flights'].find { |f| f['name'] == flight_ny.name }
+        expected_price = (flight_ny.base_price * 2).round
+
+        expect(flight_response['current_price']).to eq(expected_price)
+      end
+    end
+
+    context 'when validating overlapping flights' do
+      it 'prevents overlapping flights within the same company' do
+        overlapping_flight = build(:flight, company: company, departs_at: 1.5.days.from_now,
+                                            arrives_at: 2.5.days.from_now)
+
+        expect(overlapping_flight).not_to be_valid
+      end
+
+      it 'allows non-overlapping flights within the same company' do
+        non_overlapping_flight = flights[1]
+        expect(non_overlapping_flight).to be_valid
       end
     end
   end
