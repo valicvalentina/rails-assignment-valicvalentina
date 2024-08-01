@@ -7,6 +7,10 @@ class BookingSerializer < Blueprinter::Base
     booking.seat_price.to_f.to_i
   end
 
+  field :total_price do |booking, _|
+    booking.total_price.to_f.to_i
+  end
+
   view :extended do
     association :user, blueprint: UserSerializer
     association :flight, blueprint: FlightSerializer

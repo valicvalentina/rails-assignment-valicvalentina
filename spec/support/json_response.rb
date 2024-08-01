@@ -14,4 +14,11 @@ module TestHelpers
       { 'Authorization' => 'Bearer invalid_token' }
     end
   end
+
+  module FlightHelpers
+    def calculate_expected_price(flight)
+      days_until_departure = [(flight.departs_at.to_date - Time.zone.today).to_i, 0].max
+      (flight.base_price * (1 + (1.0 / 15) * (15 - days_until_departure))).round
+    end
+  end
 end

@@ -9,7 +9,8 @@ module Api
     before_action :authorize_update_role, only: [:update]
 
     def index
-      users = User.all
+      users = User.includes(:bookings).sorted_by_email
+      users = users.filter_by_query(params[:query]) if params[:query].present?
       if request.headers['X-API-SERIALIZER-ROOT'] == '0'
         render json: serialize(users, :extended)
       else

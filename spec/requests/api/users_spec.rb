@@ -5,8 +5,10 @@ RSpec.describe 'Users API', type: :request do
   include TestHelpers::Headers
 
   let!(:users) { create_list(:user, 2) }
-  let!(:user) { create(:user, role: nil) }
-  let!(:admin) { create(:user, role: 'admin') }
+  let!(:user) do
+    create(:user, role: nil, email: 'iva.ic@gmail.com', first_name: 'Ana', last_name: 'Ivic')
+  end
+  let!(:admin) { create(:user, role: 'admin', email: 'luka.ic@gmail.com') }
 
   describe 'GET /api/users' do
     context 'when admin' do
@@ -21,6 +23,63 @@ RSpec.describe 'Users API', type: :request do
       it 'returns forbidden status' do
         get '/api/users', headers: valid_headers(user)
         expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context 'when sorting by email' do
+      it 'returns users sorted by email in ascending order' do
+        User.delete_all
+        admin = create(:user, email: 'valentina.valic@gmail.com', role: 'admin')
+        create(:user, email: 'sven.valic@gmail.com')
+
+        get '/api/users', headers: valid_headers(admin)
+        expect(response).to have_http_status(:ok)
+
+        body = json_body['users']
+        expect(body.map do |c|
+                 c['email']
+               end).to eq(['sven.valic@gmail.com', 'valentina.valic@gmail.com'])
+      end
+    end
+
+    context 'when filtering by query parameter' do
+      it 'filters users by email' do
+        get '/api/users', params: { query: 'iva.ic@gmail.com' }, headers: valid_headers(admin)
+        expect(response).to have_http_status(:ok)
+
+        returned_users = json_body['users'].map { |user| user['email'] }
+        expect(returned_users).to contain_exactly('iva.ic@gmail.com')
+      end
+
+      it 'filters users by first_name' do
+        get '/api/users', params: { query: 'Ana' }, headers: valid_headers(admin)
+        expect(response).to have_http_status(:ok)
+
+        returned_users = json_body['users'].map { |user| user['email'] }
+        expect(returned_users).to contain_exactly('iva.ic@gmail.com')
+      end
+
+      it 'filters users by last_name' do
+        get '/api/users', params: { query: 'Ivic' }, headers: valid_headers(admin)
+        expect(response).to have_http_status(:ok)
+
+        returned_users = json_body['users'].map { |user| user['email'] }
+        expect(returned_users).to contain_exactly('iva.ic@gmail.com')
+      end
+
+      it 'filters users by partial match (case insensitive)' do
+        get '/api/users', params: { query: 'ANA' }, headers: valid_headers(admin)
+        expect(response).to have_http_status(:ok)
+
+        returned_users = json_body['users'].map { |user| user['email'] }
+        expect(returned_users).to contain_exactly('iva.ic@gmail.com')
+      end
+
+      it 'returns empty array for non-matching query' do
+        get '/api/users', params: { query: 'nonexistent' }, headers: valid_headers(admin)
+        expect(response).to have_http_status(:ok)
+
+        expect(json_body['users']).to be_empty
       end
     end
   end

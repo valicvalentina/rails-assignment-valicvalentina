@@ -8,7 +8,10 @@ module Api
     before_action :authorize_update_user_id, only: [:update]
 
     def index
-      bookings = admin? ? Booking.all : current_user.bookings
+      bookings = admin? ? Booking.includes(:flight, :user) : current_user.bookings
+
+      bookings = bookings.with_active_flights if params[:filter] == 'active'
+      bookings = bookings.ordered_by_flight_details
 
       if request.headers['X-API-SERIALIZER-ROOT'] == '0'
         render json: serialize(bookings, :extended)

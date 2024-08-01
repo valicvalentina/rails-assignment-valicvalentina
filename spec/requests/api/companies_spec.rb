@@ -24,6 +24,56 @@ RSpec.describe 'Companies API', type: :request do
         expect(json_body.size).to eq(3)
       end
     end
+
+    context 'when sorting by name' do
+      it 'returns companies sorted by name in ascending order' do
+        Company.delete_all
+        create(:company, name: 'Mercedes')
+        create(:company, name: 'Porsche')
+        create(:company, name: 'Ferrari')
+
+        get '/api/companies'
+        expect(response).to have_http_status(:ok)
+
+        body = json_body['companies']
+        expect(body.map { |c| c['name'] }).to eq(['Ferrari', 'Mercedes', 'Porsche'])
+      end
+    end
+
+    context 'when filtering active companies' do
+      it 'returns only companies with active flights' do
+        mercedes = create(:company, name: 'Mercedes')
+        porsche = create(:company, name: 'Porsche')
+        ferrari = create(:company, name: 'Ferrari')
+
+        create(:flight, company: mercedes, departs_at: 1.day.from_now)
+        create(:flight, company: ferrari, departs_at: 2.days.ago)
+        create(:flight, company: porsche, departs_at: 3.days.from_now, arrives_at: 4.days.from_now)
+
+        get '/api/companies?filter=active'
+        expect(response).to have_http_status(:ok)
+
+        body = json_body['companies']
+        expect(body.map { |c| c['name'] }).to eq(['Mercedes', 'Porsche'])
+      end
+    end
+
+    context 'when including number of active flights' do
+      it 'returns the correct number of active flights for each company' do
+        mercedes = create(:company, name: 'Mercedes')
+        ferrari = create(:company, name: 'Ferrari')
+
+        create(:flight, company: mercedes, departs_at: 1.day.from_now)
+        create(:flight, company: ferrari, departs_at: 2.days.ago)
+
+        get '/api/companies'
+        expect(response).to have_http_status(:ok)
+        body = json_body['companies']
+        companies = body.index_by { |c| c['name'] }
+        expect(companies['Mercedes']['no_of_active_flights']).to eq(1)
+        expect(companies['Ferrari']['no_of_active_flights']).to eq(0)
+      end
+    end
   end
 
   describe 'GET /api/companies/:id' do
