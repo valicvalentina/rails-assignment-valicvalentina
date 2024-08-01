@@ -14,7 +14,7 @@ class Flight < ApplicationRecord
   scope :by_name, ->(name) { where('LOWER(name) LIKE ?', "%#{name.downcase}%") }
   scope :by_departure_time, lambda { |time|
     truncated_time = truncate_to_minute(time)
-    where('DATE_TRUNC(\'minute\', departs_at) = ?', truncated_time)
+    where("DATE_TRUNC('minute', departs_at) = ?", truncated_time)
   }
   scope :by_min_available_seats, lambda { |min_seats|
     joins('LEFT JOIN bookings ON bookings.flight_id = flights.id')
@@ -44,12 +44,29 @@ class Flight < ApplicationRecord
   end
 
   def add_errors(overlapping_flights)
-    if overlapping_flights.where('departs_at < ?', arrives_at).exists?
-      errors.add(:departs_at, 'overlaps with another flight')
-    end
+    add_departure_error(overlapping_flights) if overlapping_flights.where('departs_at < ?',
+                                                                          arrives_at).exists?
+    add_arrival_error(overlapping_flights) if overlapping_flights.where('arrives_at > ?',
+                                                                        departs_at).exists?
+  end
 
-    return unless overlapping_flights.where('arrives_at > ?', departs_at).exists?
+  def add_departure_error(_overlapping_flights)
+    errors.add(:departs_at, 'overlaps with another flight')
+  end
 
+  def add_arrival_error(_overlapping_flights)
     errors.add(:arrives_at, 'overlaps with another flight')
+  end
+
+  def current_price
+    FlightCalculator.new(self).current_price
+  end
+
+  def company_name
+    company.present? ? company.name : 'No Company'
+  end
+
+  def no_of_booked_seats
+    bookings.present? ? bookings.sum(:no_of_seats) : 0
   end
 end

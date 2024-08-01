@@ -55,6 +55,7 @@ module Api
                                      :company_id)
     end
 
+    # dodaj filtriranje u zasebnu klasu
     def filter_flights_by_params(flights)
       flights = filter_by_name(flights) if params[:name_cont].present?
       flights = filter_by_departure_time(flights) if params[:departs_at_eq].present?

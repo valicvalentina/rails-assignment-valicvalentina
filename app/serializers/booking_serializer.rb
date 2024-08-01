@@ -8,7 +8,7 @@ class BookingSerializer < Blueprinter::Base
   end
 
   field :total_price do |booking, _|
-    booking.no_of_seats * booking.seat_price.to_i
+    booking.total_price
   end
 
   view :extended do

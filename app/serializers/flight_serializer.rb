@@ -8,23 +8,15 @@ class FlightSerializer < Blueprinter::Base
   end
 
   field :no_of_booked_seats do |flight, _options|
-    flight.bookings.present? ? flight.bookings.sum(:no_of_seats) : 0
+    flight.no_of_booked_seats
   end
 
   field :company_name do |flight, _options|
-    flight.company.present? ? flight.company.name : 'No Company'
+    flight.company_name
   end
 
   field :current_price do |flight, _options|
-    days_until_departure = [(flight.departs_at.to_date - Time.zone.today).to_i, 0].max
-
-    current_price = if days_until_departure >= 15
-                      flight.base_price
-                    else
-                      flight.base_price * (1 + (1.0 / 15) * (15 - days_until_departure))
-                    end
-
-    current_price.round
+    flight.current_price
   end
 
   view :extended do
